@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, jsonb, integer } from 'drizzle-orm/pg-core';
 
 export const bingoTemplates = pgTable('bingo_templates', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -17,4 +17,7 @@ export const bingoGames = pgTable('bingo_games', {
   completed: boolean('completed').default(false).notNull(),
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  durationSeconds: integer('duration_seconds'),
+  goalReached: text('goal_reached'),
+  items: jsonb('items').$type<string[]>(),
 });

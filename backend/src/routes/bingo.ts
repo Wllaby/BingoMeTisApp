@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import sharp from 'sharp';
 import * as schema from "../db/schema.js";
 import type { App } from "../index.js";
@@ -44,7 +44,7 @@ export function register(app: App, fastify: FastifyInstance) {
     try {
       const templates = await app.db.select().from(schema.bingoTemplates);
       app.logger.info({ count: templates.length }, 'Successfully fetched bingo templates');
-      return templates;
+      return { templates };
     } catch (error) {
       app.logger.error({ err: error }, 'Failed to fetch bingo templates');
       throw error;
@@ -251,6 +251,96 @@ export function register(app: App, fastify: FastifyInstance) {
       return { url };
     } catch (error) {
       app.logger.error({ err: error, gameId }, 'Failed to generate shareable bingo card image');
+      throw error;
+    }
+  });
+
+  // POST /api/bingo/history - Save game to history
+  fastify.post('/history', async (request, reply) => {
+    const body = request.body as {
+      id: string;
+      template_name: string;
+      marked_cells: number[];
+      completed: boolean;
+      completed_at: string;
+      created_at: string;
+      duration_seconds?: number;
+      goal_reached?: string;
+      items?: string[];
+    };
+    app.logger.info({ gameId: body.id, templateName: body.template_name }, 'Saving game to history');
+
+    try {
+      const [existingGame] = await app.db
+        .select()
+        .from(schema.bingoGames)
+        .where(eq(schema.bingoGames.id, body.id));
+
+      let game;
+      if (existingGame) {
+        // Update existing game
+        const [updatedGame] = await app.db.update(schema.bingoGames)
+          .set({
+            templateName: body.template_name,
+            markedCells: body.marked_cells,
+            completed: body.completed,
+            completedAt: body.completed_at ? new Date(body.completed_at) : null,
+            durationSeconds: body.duration_seconds || null,
+            goalReached: body.goal_reached || null,
+            items: body.items || null,
+          })
+          .where(eq(schema.bingoGames.id, body.id))
+          .returning();
+        game = updatedGame;
+      } else {
+        // Create new game
+        const [newGame] = await app.db.insert(schema.bingoGames).values({
+          id: body.id,
+          templateId: existingGame?.templateId || '', // Will be filled if available
+          templateName: body.template_name,
+          markedCells: body.marked_cells,
+          completed: body.completed,
+          completedAt: body.completed_at ? new Date(body.completed_at) : null,
+          createdAt: new Date(body.created_at),
+          durationSeconds: body.duration_seconds || null,
+          goalReached: body.goal_reached || null,
+          items: body.items || null,
+        }).returning();
+        game = newGame;
+      }
+
+      app.logger.info({ gameId: game.id, completed: game.completed }, 'Game saved to history successfully');
+      return { success: true, game };
+    } catch (error) {
+      app.logger.error({ err: error, gameId: body.id }, 'Failed to save game to history');
+      throw error;
+    }
+  });
+
+  // GET /api/bingo/history - Get game history with pagination
+  fastify.get('/history', async (request, reply) => {
+    const query = request.query as { limit?: string; offset?: string };
+    const limit = Math.min(parseInt(query.limit || '20', 10), 100);
+    const offset = parseInt(query.offset || '0', 10);
+    app.logger.info({ limit, offset }, 'Fetching game history');
+
+    try {
+      const games = await app.db
+        .select()
+        .from(schema.bingoGames)
+        .orderBy(desc(schema.bingoGames.completedAt))
+        .limit(limit)
+        .offset(offset);
+
+      const totalResult = await app.db
+        .select({ count: schema.bingoGames.id })
+        .from(schema.bingoGames);
+      const total = totalResult.length;
+
+      app.logger.info({ count: games.length, total, offset, limit }, 'Successfully fetched game history');
+      return { games, total };
+    } catch (error) {
+      app.logger.error({ err: error, limit, offset }, 'Failed to fetch game history');
       throw error;
     }
   });
