@@ -7,40 +7,44 @@ import type { App } from "../index.js";
 export function register(app: App, fastify: FastifyInstance) {
   // Seed default templates on startup
   fastify.addHook('onReady', async () => {
-    const existingTemplates = await app.db
-      .select()
-      .from(schema.bingoTemplates);
+    const defaultTemplates = [
+      {
+        name: "Office Jargon",
+        description: undefined,
+        items: ["Synergy", "Circle Back", "Low-Hanging Fruit", "Think Outside the Box", "Touch Base", "Paradigm Shift", "Leverage", "Bandwidth", "Deep Dive", "Move the Needle", "Best Practice", "Core Competency", "Value Add", "Win-Win", "Game Changer", "Take it Offline", "Drill Down", "Run it Up the Flagpole", "Boil the Ocean", "Drink the Kool-Aid", "Peel the Onion", "Parking Lot", "Ballpark Figure", "Rubber Meets the Road", "Push the Envelope"],
+        isCustom: false,
+      },
+      {
+        name: "Birds",
+        description: undefined,
+        items: ["Robin", "Blue Jay", "Cardinal", "Sparrow", "Crow", "Eagle", "Hawk", "Owl", "Woodpecker", "Hummingbird", "Pigeon", "Seagull", "Pelican", "Flamingo", "Penguin", "Parrot", "Toucan", "Peacock", "Swan", "Duck", "Goose", "Turkey", "Chicken", "Ostrich", "Emu"],
+        isCustom: false,
+      },
+      {
+        name: "Customer Service",
+        description: undefined,
+        items: ["Can I speak to a manager?", "I want a refund", "This is unacceptable", "I've been waiting forever", "Your website is broken", "I didn't receive my order", "The product is defective", "I was promised...", "I'll take my business elsewhere", "I'm a loyal customer", "This is ridiculous", "I demand compensation", "I'll leave a bad review", "I know the owner", "I'm never shopping here again", "Can you make an exception?", "I need this today", "Why is this so expensive?", "I saw it cheaper elsewhere", "The ad said...", "I lost my receipt", "Can you price match?", "I changed my mind", "This doesn't fit", "I want to speak to corporate"],
+        isCustom: false,
+      },
+      {
+        name: "Things kids do",
+        description: "Adorable and chaotic moments with children",
+        items: ["Random \"I love you\"", "Gives surprise hug", "Wants to hold your hand", "Says something accidentally profound", "Tries to help (but makes it worse)", "Compliments you sincerely", "Laughs uncontrollably at nothing", "Says goodnight to inanimate objects", "Makes you a \"gift\"", "Proudly shows terrible artwork", "Wants the same book again", "Wants the same song again", "Wants the same show again", "Wants the same snack again", "Needs help with something they can do", "Insists \"I can do it myself\"", "Takes forever to do anything", "Needs one more thing before bed", "Needs one more thing before bed…and then another one more thing", "Asks \"why?\" repeatedly", "Interrupts adult conversations", "Talks nonstop in the car", "Refuses food they asked for", "Melts down over nothing", "Changes their mind instantly", "Ignores you when called", "Says something wildly incorrect with confidence", "Makes up their own rules", "Argues about obvious facts", "Thinks tomorrow is \"a long time\"", "Thinks five minutes is forever", "Connects unrelated events", "Asks impossible questions", "\"Watch this!\"", "\"I'm bored\"", "\"That's not fair\"", "\"I didn't do it\"", "\"It was an accident\"", "\"But I need it\"", "\"I'm not tired\"", "\"Just one more\"", "\"You promised\" (you didn't)", "Brutally honest observations", "Comments on strangers' appearance", "Asks loud personal questions in public", "Repeats something embarrassing you said", "Tells family secrets", "Mispronounces words adorably", "Makes up new words", "Swears accidentally", "Sticky hands without a clear source", "Mysterious stains", "Pockets full of rocks", "Clothes inside out", "From laughing to crying in milliseconds", "World-ending sadness", "Over-the-top excitement", "Deep empathy out of nowhere", "Overreacts to minor inconvenience", "Forgets why they're upset", "Talks to themselves", "Talks to toys seriously", "Pretends to be an animal", "Makes random sound effects", "Sings nonsense songs", "Repeats the same joke", "Chooses chaos in quiet moments", "Sleeps in the weirdest position", "Asks a deep life question at bed time"],
+        isCustom: false,
+      },
+    ];
 
-    if (existingTemplates.length === 0) {
-      const defaultTemplates = [
-        {
-          name: "Office Jargon",
-          description: undefined,
-          items: ["Synergy", "Circle Back", "Low-Hanging Fruit", "Think Outside the Box", "Touch Base", "Paradigm Shift", "Leverage", "Bandwidth", "Deep Dive", "Move the Needle", "Best Practice", "Core Competency", "Value Add", "Win-Win", "Game Changer", "Take it Offline", "Drill Down", "Run it Up the Flagpole", "Boil the Ocean", "Drink the Kool-Aid", "Peel the Onion", "Parking Lot", "Ballpark Figure", "Rubber Meets the Road", "Push the Envelope"],
-          isCustom: false,
-        },
-        {
-          name: "Birds",
-          description: undefined,
-          items: ["Robin", "Blue Jay", "Cardinal", "Sparrow", "Crow", "Eagle", "Hawk", "Owl", "Woodpecker", "Hummingbird", "Pigeon", "Seagull", "Pelican", "Flamingo", "Penguin", "Parrot", "Toucan", "Peacock", "Swan", "Duck", "Goose", "Turkey", "Chicken", "Ostrich", "Emu"],
-          isCustom: false,
-        },
-        {
-          name: "Customer Service",
-          description: undefined,
-          items: ["Can I speak to a manager?", "I want a refund", "This is unacceptable", "I've been waiting forever", "Your website is broken", "I didn't receive my order", "The product is defective", "I was promised...", "I'll take my business elsewhere", "I'm a loyal customer", "This is ridiculous", "I demand compensation", "I'll leave a bad review", "I know the owner", "I'm never shopping here again", "Can you make an exception?", "I need this today", "Why is this so expensive?", "I saw it cheaper elsewhere", "The ad said...", "I lost my receipt", "Can you price match?", "I changed my mind", "This doesn't fit", "I want to speak to corporate"],
-          isCustom: false,
-        },
-        {
-          name: "Things kids do",
-          description: "Adorable and chaotic moments with children",
-          items: ["Random \"I love you\"", "Gives surprise hug", "Wants to hold your hand", "Says something accidentally profound", "Tries to help (but makes it worse)", "Compliments you sincerely", "Laughs uncontrollably at nothing", "Says goodnight to inanimate objects", "Makes you a \"gift\"", "Proudly shows terrible artwork", "Wants the same book again", "Wants the same song again", "Wants the same show again", "Wants the same snack again", "Needs help with something they can do", "Insists \"I can do it myself\"", "Takes forever to do anything", "Needs one more thing before bed", "Needs one more thing before bed…and then another one more thing", "Asks \"why?\" repeatedly", "Interrupts adult conversations", "Talks nonstop in the car", "Refuses food they asked for", "Melts down over nothing", "Changes their mind instantly", "Ignores you when called", "Says something wildly incorrect with confidence", "Makes up their own rules", "Argues about obvious facts", "Thinks tomorrow is \"a long time\"", "Thinks five minutes is forever", "Connects unrelated events", "Asks impossible questions", "\"Watch this!\"", "\"I'm bored\"", "\"That's not fair\"", "\"I didn't do it\"", "\"It was an accident\"", "\"But I need it\"", "\"I'm not tired\"", "\"Just one more\"", "\"You promised\" (you didn't)", "Brutally honest observations", "Comments on strangers' appearance", "Asks loud personal questions in public", "Repeats something embarrassing you said", "Tells family secrets", "Mispronounces words adorably", "Makes up new words", "Swears accidentally", "Sticky hands without a clear source", "Mysterious stains", "Pockets full of rocks", "Clothes inside out", "From laughing to crying in milliseconds", "World-ending sadness", "Over-the-top excitement", "Deep empathy out of nowhere", "Overreacts to minor inconvenience", "Forgets why they're upset", "Talks to themselves", "Talks to toys seriously", "Pretends to be an animal", "Makes random sound effects", "Sings nonsense songs", "Repeats the same joke", "Chooses chaos in quiet moments", "Sleeps in the weirdest position", "Asks a deep life question at bed time"],
-          isCustom: false,
-        },
-      ];
+    // Check each template and insert only if it doesn't exist
+    for (const template of defaultTemplates) {
+      const [existingTemplate] = await app.db
+        .select()
+        .from(schema.bingoTemplates)
+        .where(eq(schema.bingoTemplates.name, template.name));
 
-      await app.db.insert(schema.bingoTemplates).values(defaultTemplates);
-      app.logger.info('Seeded default bingo templates');
+      if (!existingTemplate) {
+        await app.db.insert(schema.bingoTemplates).values(template);
+        app.logger.info({ templateName: template.name }, 'Seeded default bingo template');
+      }
     }
   });
 
