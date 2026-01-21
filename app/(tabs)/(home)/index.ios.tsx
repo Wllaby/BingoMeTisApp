@@ -102,10 +102,14 @@ export default function HomeScreen() {
       }
 
       const data = await response.json();
-      console.log('HomeScreen: Templates loaded from API', data.length);
+      console.log('HomeScreen: Templates response:', data);
+      
+      // Handle both array and object responses
+      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
+      console.log('HomeScreen: Templates loaded from API', templatesArray.length);
       
       // Transform backend data to match frontend interface
-      const transformedTemplates: BingoTemplate[] = data.map((template: any) => ({
+      const transformedTemplates: BingoTemplate[] = templatesArray.map((template: any) => ({
         id: template.id,
         name: template.name,
         description: template.description,
@@ -456,7 +460,6 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>🎯 Bingo MeTis</Text>
             <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
           </View>
 
@@ -508,23 +511,6 @@ export default function HomeScreen() {
               color={colors.primary} 
             />
             <Text style={styles.createButtonText}>Create Custom Template</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => {
-              console.log('HomeScreen: Upload Excel button tapped');
-              router.push('/admin-upload');
-            }}
-            activeOpacity={0.7}
-          >
-            <IconSymbol 
-              ios_icon_name="arrow.up.doc.fill" 
-              android_material_icon_name="upload"
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.uploadButtonText}>Upload Kids Options (Excel)</Text>
           </TouchableOpacity>
         </ScrollView>
       </ImageBackground>
@@ -736,19 +722,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 30,
-    marginTop: 20,
-  },
-  headerTitle: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
+    marginTop: 80,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: '600',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
@@ -819,23 +797,6 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   createButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 8,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  uploadButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
