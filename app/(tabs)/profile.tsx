@@ -13,8 +13,12 @@ import {
   Alert
 } from "react-native";
 import { Stack } from "expo-router";
+import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
+
+// Get backend URL from app.json configuration
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
 
 interface GameHistory {
   id: string;
@@ -39,14 +43,47 @@ export default function HistoryScreen() {
   const loadGameHistory = async () => {
     try {
       console.log('HistoryScreen: Fetching game history from API');
-      // TODO: Backend Integration - GET /api/bingo/games
-      // Mock data for now
-      const mockGames: GameHistory[] = [];
-      setGames(mockGames);
+      console.log('HistoryScreen: Backend URL:', BACKEND_URL);
+      
+      if (!BACKEND_URL) {
+        console.error('HistoryScreen: BACKEND_URL is not configured');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/games`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('HistoryScreen: Game history loaded from API', data.length);
+      
+      // Transform backend data to match frontend interface
+      const transformedGames: GameHistory[] = data.map((game: any) => ({
+        id: game.id,
+        template_name: game.templateName || game.template_name,
+        marked_cells: game.markedCells || game.marked_cells || [],
+        completed: game.completed,
+        completed_at: game.completedAt || game.completed_at,
+        created_at: game.createdAt || game.created_at,
+      }));
+      
+      // Filter to only show completed games
+      const completedGames = transformedGames.filter(game => game.completed);
+      console.log('HistoryScreen: Completed games:', completedGames.length);
+      
+      setGames(completedGames);
       setLoading(false);
-      console.log('HistoryScreen: Game history loaded', mockGames.length);
     } catch (error) {
       console.error('HistoryScreen: Error loading game history', error);
+      Alert.alert('Error', 'Failed to load game history. Please try again.');
       setLoading(false);
     }
   };

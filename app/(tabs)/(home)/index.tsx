@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   StyleSheet, 
   View, 
@@ -10,18 +10,23 @@ import {
   Dimensions,
   Platform,
   ImageBackground,
-  ImageSourcePropType
+  ImageSourcePropType,
+  Modal
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
+import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import * as Haptics from "expo-haptics";
 import { KidsOptions } from "@/data/KidsOptions";
+import ConfettiCannon from 'react-native-confetti-cannon';
 
-const { width } = Dimensions.get('window');
-const CELL_SIZE = (width - 80) / 5; // 5x5 grid with padding
+const { width, height } = Dimensions.get('window');
+const CELL_SIZE = (width - 80) / 5;
 
-// Helper to resolve image sources (handles both local require() and remote URLs)
+// Get backend URL from app.json configuration
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
   if (typeof source === 'string') return { uri: source };
@@ -44,25 +49,27 @@ interface BingoGame {
   marked_cells: number[];
   completed: boolean;
   items?: string[];
+  started_at?: string;
+  bingo_count: number;
+  target_bingo_count: number;
 }
 
 export default function HomeScreen() {
   console.log('HomeScreen: Component mounted');
   
   const router = useRouter();
+  const confettiRef = useRef<any>(null);
   const [templates, setTemplates] = useState<BingoTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<BingoTemplate | null>(null);
   const [currentGame, setCurrentGame] = useState<BingoGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTemplateList, setShowTemplateList] = useState(true);
+  const [showContinueModal, setShowContinueModal] = useState(false);
+  const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
 
-  // Use the old image as default background
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
-  
-  // Use the new image for Kids theme
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
   
-  // Determine which background to use
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const backgroundImage = isKidsTheme ? kidsBackgroundImage : defaultBackgroundImage;
 
@@ -74,39 +81,44 @@ export default function HomeScreen() {
   const loadTemplates = async () => {
     try {
       console.log('HomeScreen: Fetching templates from API');
-      // TODO: Backend Integration - GET /api/bingo/templates
-      // Temporary mock data
-      const mockTemplates: BingoTemplate[] = [
-        {
-          id: '1',
-          name: 'Office Jargon',
-          description: 'Corporate buzzword bingo',
-          items: ["Synergy", "Circle Back", "Low-Hanging Fruit", "Think Outside the Box", "Touch Base", "Paradigm Shift", "Leverage", "Bandwidth", "Deep Dive", "Move the Needle", "Best Practice", "Core Competency", "Value Add", "Win-Win", "Game Changer", "Take it Offline", "Drill Down", "Run it Up the Flagpole", "Boil the Ocean", "Drink the Kool-Aid", "Peel the Onion", "Parking Lot", "Ballpark Figure", "Rubber Meets the Road", "Push the Envelope"],
-          is_custom: false,
-          created_at: new Date().toISOString()
+      console.log('HomeScreen: Backend URL:', BACKEND_URL);
+      
+      if (!BACKEND_URL) {
+        console.error('HomeScreen: BACKEND_URL is not configured');
+        Alert.alert('Error', 'Backend URL is not configured');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/templates`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          name: 'Kids',
-          description: 'Fun things kids love',
-          items: KidsOptions,
-          is_custom: false,
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '3',
-          name: 'Customer Service',
-          description: 'Classic customer complaints',
-          items: ["Can I speak to a manager?", "I want a refund", "This is unacceptable", "I've been waiting forever", "Your website is broken", "I didn't receive my order", "The product is defective", "I was promised...", "I'll take my business elsewhere", "I'm a loyal customer", "This is ridiculous", "I demand compensation", "I'll leave a bad review", "I know the owner", "I'm never shopping here again", "Can you make an exception?", "I need this today", "Why is this so expensive?", "I saw it cheaper elsewhere", "The ad said...", "I lost my receipt", "Can you price match?", "I changed my mind", "This doesn't fit", "I want to speak to corporate"],
-          is_custom: false,
-          created_at: new Date().toISOString()
-        }
-      ];
-      setTemplates(mockTemplates);
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('HomeScreen: Templates loaded from API', data.length);
+      
+      // Transform backend data to match frontend interface
+      const transformedTemplates: BingoTemplate[] = data.map((template: any) => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        items: template.items,
+        is_custom: template.isCustom || template.is_custom,
+        created_at: template.createdAt || template.created_at,
+      }));
+      
+      setTemplates(transformedTemplates);
       setLoading(false);
-      console.log('HomeScreen: Templates loaded', mockTemplates.length);
     } catch (error) {
       console.error('HomeScreen: Error loading templates', error);
+      Alert.alert('Error', 'Failed to load templates. Please try again.');
       setLoading(false);
     }
   };
@@ -114,8 +126,6 @@ export default function HomeScreen() {
   const shuffleArray = (array: string[]) => {
     console.log('HomeScreen: Shuffling array of', array.length, 'items using Fisher-Yates algorithm');
     const newArray = [...array];
-    // Fisher-Yates shuffle algorithm for true randomization
-    // This ensures every permutation has equal probability
     for (let i = newArray.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
@@ -128,32 +138,53 @@ export default function HomeScreen() {
     console.log('HomeScreen: Starting new game with template', template.name);
     console.log('HomeScreen: Template has', template.items.length, 'total options available');
     try {
-      // TODO: Backend Integration - POST /api/bingo/games with { template_id: template.id }
-      
-      // Step 1: Shuffle the entire options list to get random order
+      if (!BACKEND_URL) {
+        console.error('HomeScreen: BACKEND_URL is not configured');
+        Alert.alert('Error', 'Backend URL is not configured');
+        return;
+      }
+
       const shuffledItems = shuffleArray([...template.items]);
-      
-      // Step 2: Take first 24 items from shuffled list (these are random due to shuffle)
       const selectedItems = shuffledItems.slice(0, 24);
       console.log('HomeScreen: Selected 24 random items from shuffled list');
       
-      // Step 3: Create the 25-item array with FREE SPACE in the center (index 12)
       const gameItems = [
-        ...selectedItems.slice(0, 12),  // First 12 items (indices 0-11)
-        "FREE SPACE",                    // Center cell (index 12)
-        ...selectedItems.slice(12, 24)   // Last 12 items (indices 13-24)
+        ...selectedItems.slice(0, 12),
+        "FREE SPACE",
+        ...selectedItems.slice(12, 24)
       ];
       
       console.log('HomeScreen: Bingo card created with FREE SPACE at center (index 12)');
-      console.log('HomeScreen: Sample items on card:', gameItems.slice(0, 3), '...', gameItems.slice(22, 25));
+      
+      // Create game in backend
+      console.log('HomeScreen: Creating game in backend with template ID:', template.id);
+      const response = await fetch(`${BACKEND_URL}/games`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          template_id: template.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const backendGame = await response.json();
+      console.log('HomeScreen: Game created in backend with ID:', backendGame.id);
       
       const newGame: BingoGame = {
-        id: Date.now().toString(),
+        id: backendGame.id,
         template_id: template.id,
         template_name: template.name,
-        marked_cells: [12], // FREE SPACE is automatically marked
+        marked_cells: [12],
         completed: false,
-        items: gameItems
+        items: gameItems,
+        started_at: new Date().toISOString(),
+        bingo_count: 0,
+        target_bingo_count: 1
       };
       
       setCurrentGame(newGame);
@@ -163,17 +194,127 @@ export default function HomeScreen() {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      console.log('HomeScreen: Game started', newGame.id);
+      console.log('HomeScreen: Game started at', newGame.started_at);
     } catch (error) {
       console.error('HomeScreen: Error starting game', error);
-      Alert.alert('Error', 'Failed to start game');
+      Alert.alert('Error', 'Failed to start game. Please try again.');
+    }
+  };
+
+  const countBingos = (markedCells: number[]): number => {
+    let bingoCount = 0;
+    
+    for (let row = 0; row < 5; row++) {
+      const rowCells = [row * 5, row * 5 + 1, row * 5 + 2, row * 5 + 3, row * 5 + 4];
+      if (rowCells.every(cell => markedCells.includes(cell))) {
+        bingoCount++;
+      }
+    }
+    
+    for (let col = 0; col < 5; col++) {
+      const colCells = [col, col + 5, col + 10, col + 15, col + 20];
+      if (colCells.every(cell => markedCells.includes(cell))) {
+        bingoCount++;
+      }
+    }
+    
+    const diagonal1 = [0, 6, 12, 18, 24];
+    const diagonal2 = [4, 8, 12, 16, 20];
+    if (diagonal1.every(cell => markedCells.includes(cell))) {
+      bingoCount++;
+    }
+    if (diagonal2.every(cell => markedCells.includes(cell))) {
+      bingoCount++;
+    }
+    
+    return bingoCount;
+  };
+
+  const saveGameToHistory = async (game: BingoGame, bingoCount: number) => {
+    console.log('HomeScreen: Saving game to history');
+    const startTime = new Date(game.started_at || new Date()).getTime();
+    const endTime = new Date().getTime();
+    const durationSeconds = Math.floor((endTime - startTime) / 1000);
+    
+    console.log('HomeScreen: Game duration:', durationSeconds, 'seconds');
+    
+    try {
+      if (!BACKEND_URL) {
+        console.error('HomeScreen: BACKEND_URL is not configured');
+        return;
+      }
+
+      console.log('HomeScreen: Saving game to backend - Game ID:', game.id);
+      
+      // Use PUT /games/:id to mark game as completed
+      const response = await fetch(`${BACKEND_URL}/games/${game.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          marked_cells: game.marked_cells,
+          completed: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const savedGame = await response.json();
+      console.log('HomeScreen: Game saved to history successfully', savedGame.id);
+      console.log('HomeScreen: Game completed with', bingoCount, 'bingos in', durationSeconds, 'seconds');
+    } catch (error) {
+      console.error('HomeScreen: Error saving game to history', error);
+      // Don't show error to user, just log it
+    }
+  };
+
+  const handleContinueResponse = async (continueGame: boolean) => {
+    console.log('HomeScreen: User chose to continue:', continueGame);
+    setShowContinueModal(false);
+    
+    if (!currentGame) return;
+    
+    if (!continueGame) {
+      const bingoCount = countBingos(currentGame.marked_cells);
+      await saveGameToHistory(currentGame, bingoCount);
+      
+      Alert.alert(
+        '🎉 Game Saved!',
+        'Your game has been saved to history.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('HomeScreen: Returning to template list');
+              resetGame();
+            }
+          }
+        ]
+      );
+    } else {
+      if (nextTarget === '3-bingos') {
+        console.log('HomeScreen: Continuing to 3 bingos');
+        setCurrentGame({
+          ...currentGame,
+          target_bingo_count: 3
+        });
+      } else if (nextTarget === 'full-card') {
+        console.log('HomeScreen: Continuing to full card');
+        setCurrentGame({
+          ...currentGame,
+          target_bingo_count: 25
+        });
+      }
+      setNextTarget(null);
     }
   };
 
   const toggleCell = async (index: number) => {
     if (!currentGame) return;
     
-    // Don't allow toggling the FREE SPACE
     if (index === 12) {
       console.log('HomeScreen: Cannot toggle FREE SPACE');
       return;
@@ -195,39 +336,80 @@ export default function HomeScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
-    // Check for bingo
-    if (checkBingo(newMarkedCells)) {
-      console.log('HomeScreen: BINGO!');
+    // Save game progress to backend
+    try {
+      if (BACKEND_URL && currentGame.id) {
+        console.log('HomeScreen: Saving game progress to backend');
+        await fetch(`${BACKEND_URL}/games/${currentGame.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            marked_cells: newMarkedCells,
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('HomeScreen: Error saving game progress', error);
+      // Don't show error to user, just log it
+    }
+    
+    const bingoCount = countBingos(newMarkedCells);
+    console.log('HomeScreen: Current bingo count:', bingoCount);
+    
+    if (currentGame.target_bingo_count === 1 && bingoCount >= 1 && currentGame.bingo_count < 1) {
+      console.log('HomeScreen: First BINGO achieved!');
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert('🎉 BINGO!', 'Congratulations! You got a bingo!', [
-        { text: 'OK', onPress: () => console.log('HomeScreen: Bingo alert dismissed') }
-      ]);
-      // TODO: Backend Integration - PUT /api/bingo/games/:id with { marked_cells, completed: true }
+      
+      setCurrentGame({
+        ...updatedGame,
+        bingo_count: bingoCount
+      });
+      
+      setNextTarget('3-bingos');
+      setShowContinueModal(true);
+    } else if (currentGame.target_bingo_count === 3 && bingoCount >= 3 && currentGame.bingo_count < 3) {
+      console.log('HomeScreen: 3 BINGOs achieved!');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
+      setCurrentGame({
+        ...updatedGame,
+        bingo_count: bingoCount
+      });
+      
+      setNextTarget('full-card');
+      setShowContinueModal(true);
+    } else if (currentGame.target_bingo_count === 25 && newMarkedCells.length === 25 && currentGame.bingo_count < 25) {
+      console.log('HomeScreen: Full card completed!');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
+      if (confettiRef.current) {
+        confettiRef.current.start();
+      }
+      
+      await saveGameToHistory(updatedGame, 25);
+      
+      Alert.alert(
+        '🎊 CONGRATULATIONS! 🎊',
+        'You completed the entire card! Your game has been saved to history.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('HomeScreen: Full card celebration complete');
+              resetGame();
+            }
+          }
+        ]
+      );
     }
-  };
-
-  const checkBingo = (markedCells: number[]): boolean => {
-    // Check rows
-    for (let row = 0; row < 5; row++) {
-      const rowCells = [row * 5, row * 5 + 1, row * 5 + 2, row * 5 + 3, row * 5 + 4];
-      if (rowCells.every(cell => markedCells.includes(cell))) return true;
-    }
-    
-    // Check columns
-    for (let col = 0; col < 5; col++) {
-      const colCells = [col, col + 5, col + 10, col + 15, col + 20];
-      if (colCells.every(cell => markedCells.includes(cell))) return true;
-    }
-    
-    // Check diagonals
-    const diagonal1 = [0, 6, 12, 18, 24];
-    const diagonal2 = [4, 8, 12, 16, 20];
-    if (diagonal1.every(cell => markedCells.includes(cell))) return true;
-    if (diagonal2.every(cell => markedCells.includes(cell))) return true;
-    
-    return false;
   };
 
   const resetGame = () => {
@@ -235,6 +417,8 @@ export default function HomeScreen() {
     setCurrentGame(null);
     setSelectedTemplate(null);
     setShowTemplateList(true);
+    setShowContinueModal(false);
+    setNextTarget(null);
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -250,7 +434,9 @@ export default function HomeScreen() {
       >
         <View style={styles.overlay} />
         <Stack.Screen options={{ headerShown: false }} />
-        <Text style={styles.loadingText}>{loadingText}</Text>
+        <View style={styles.centerContainer}>
+          <Text style={styles.loadingText}>{loadingText}</Text>
+        </View>
       </ImageBackground>
     );
   }
@@ -345,10 +531,19 @@ export default function HomeScreen() {
     );
   }
 
-  // Game view
-  const markedCount = currentGame?.marked_cells.length || 0;
-  const markedCountText = markedCount.toString();
-  const totalCountText = " / 25 marked";
+  const targetText = currentGame?.target_bingo_count === 1 
+    ? 'First Bingo' 
+    : currentGame?.target_bingo_count === 3 
+    ? '3 Bingos' 
+    : 'Full Card';
+  
+  const continueModalTitle = nextTarget === '3-bingos' 
+    ? '🎉 BINGO!' 
+    : '🎊 3 BINGOS!';
+  
+  const continueModalMessage = nextTarget === '3-bingos'
+    ? 'Congratulations! Would you like to continue to 3 bingos?'
+    : 'Amazing! Would you like to continue to fill the entire card?';
   
   return (
     <ImageBackground 
@@ -358,11 +553,16 @@ export default function HomeScreen() {
     >
       <View style={styles.overlay} />
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.gameScrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      
+      <ConfettiCannon
+        count={200}
+        origin={{x: width / 2, y: 0}}
+        autoStart={false}
+        ref={confettiRef}
+        fadeOut={true}
+      />
+      
+      <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
           <TouchableOpacity onPress={resetGame} style={styles.backButton}>
             <IconSymbol 
@@ -374,10 +574,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <View style={styles.gameHeaderText}>
             <Text style={styles.gameTitle}>{currentGame?.template_name}</Text>
-            <View style={styles.markedCountContainer}>
-              <Text style={styles.gameSubtitle}>{markedCountText}</Text>
-              <Text style={styles.gameSubtitle}>{totalCountText}</Text>
-            </View>
+            <Text style={styles.gameSubtitle}>{targetText}</Text>
           </View>
           <TouchableOpacity 
             onPress={() => {
@@ -395,52 +592,54 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.bingoGrid}>
-          {currentGame?.items?.slice(0, 25).map((item, index) => {
-            const isMarked = currentGame.marked_cells.includes(index);
-            const isFreeSpace = index === 12; // Center cell
-            const cellKey = index;
-            
-            return (
-              <TouchableOpacity
-                key={cellKey}
-                style={[
-                  styles.bingoCell,
-                  isMarked && styles.bingoCellMarked,
-                  isFreeSpace && styles.bingoCellFree
-                ]}
-                onPress={() => toggleCell(index)}
-                activeOpacity={0.7}
-              >
-                {isFreeSpace ? (
-                  <View style={styles.freeSpaceContent}>
-                    <Text style={styles.freeSpaceText}>FREE</Text>
-                  </View>
-                ) : (
-                  <Text 
-                    style={[
-                      styles.cellText,
-                      isMarked && styles.cellTextMarked
-                    ]}
-                    numberOfLines={3}
-                    adjustsFontSizeToFit
-                  >
-                    {item}
-                  </Text>
-                )}
-                {isMarked && !isFreeSpace && (
-                  <View style={styles.checkMark}>
-                    <IconSymbol 
-                      ios_icon_name="checkmark.circle.fill" 
-                      android_material_icon_name="check-circle"
-                      size={24} 
-                      color={colors.card} 
-                    />
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+        <View style={styles.cardCenterContainer}>
+          <View style={styles.bingoGrid}>
+            {currentGame?.items?.slice(0, 25).map((item, index) => {
+              const isMarked = currentGame.marked_cells.includes(index);
+              const isFreeSpace = index === 12;
+              const cellKey = index;
+              
+              return (
+                <TouchableOpacity
+                  key={cellKey}
+                  style={[
+                    styles.bingoCell,
+                    isMarked && styles.bingoCellMarked,
+                    isFreeSpace && styles.bingoCellFree
+                  ]}
+                  onPress={() => toggleCell(index)}
+                  activeOpacity={0.7}
+                >
+                  {isFreeSpace ? (
+                    <View style={styles.freeSpaceContent}>
+                      <Text style={styles.freeSpaceText}>FREE</Text>
+                    </View>
+                  ) : (
+                    <Text 
+                      style={[
+                        styles.cellText,
+                        isMarked && styles.cellTextMarked
+                      ]}
+                      numberOfLines={3}
+                      adjustsFontSizeToFit
+                    >
+                      {item}
+                    </Text>
+                  )}
+                  {isMarked && !isFreeSpace && (
+                    <View style={styles.checkMark}>
+                      <IconSymbol 
+                        ios_icon_name="checkmark.circle.fill" 
+                        android_material_icon_name="check-circle"
+                        size={24} 
+                        color={colors.card} 
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <TouchableOpacity
@@ -461,7 +660,39 @@ export default function HomeScreen() {
           />
           <Text style={styles.newGameButtonText}>New Card</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
+
+      <Modal
+        visible={showContinueModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowContinueModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{continueModalTitle}</Text>
+            <Text style={styles.modalMessage}>{continueModalMessage}</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => handleContinueResponse(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalButtonTextSecondary}>No, Save Game</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={() => handleContinueResponse(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalButtonTextPrimary}>Yes, Continue!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -475,6 +706,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scrollView: {
     flex: 1,
   },
@@ -482,9 +718,14 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
-  gameScrollContent: {
+  gameContainer: {
+    flex: 1,
     padding: 20,
     paddingBottom: 100,
+  },
+  cardCenterContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
@@ -623,10 +864,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 10,
   },
-  markedCountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   gameSubtitle: {
     fontSize: 14,
     color: '#FFFFFF',
@@ -703,10 +940,74 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: '100%',
     maxWidth: 500,
+    alignSelf: 'center',
   },
   newGameButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.card,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: colors.cardBorder,
+  },
+  modalButtonTextPrimary: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.card,
+  },
+  modalButtonTextSecondary: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
   },
 });
