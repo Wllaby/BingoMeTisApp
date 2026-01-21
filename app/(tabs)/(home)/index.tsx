@@ -68,7 +68,7 @@ export default function HomeScreen() {
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
-  const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/f9e5286f-d4ff-421f-a076-b32cc5073725.png'));
+  const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/7007edc2-3eba-483b-a36f-b7d6ed4e8a9a.jpeg'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
@@ -433,7 +433,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={defaultBackgroundImage} 
+        source={thingsKidsDoBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
