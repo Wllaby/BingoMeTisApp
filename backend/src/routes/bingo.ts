@@ -121,6 +121,9 @@ export function register(app: App, fastify: FastifyInstance) {
         templateId: template.id,
         templateName: template.name,
         markedCells: [],
+        items: template.items,
+        startedAt: new Date(),
+        bingoCount: 0,
       }).returning();
 
       app.logger.info({ gameId: game.id, templateId: template.id }, 'New bingo game created successfully');
@@ -131,11 +134,17 @@ export function register(app: App, fastify: FastifyInstance) {
     }
   });
 
-  // PUT /api/bingo/games/:id - Update game state
+  // PUT /api/bingo/games/:id - Update game progress
   fastify.put('/games/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as { marked_cells: number[]; completed?: boolean };
-    app.logger.info({ gameId: id, markedCount: body.marked_cells?.length, completed: body.completed }, 'Updating bingo game');
+    const body = request.body as {
+      markedCells: number[];
+      bingoCount?: number;
+      completed?: boolean;
+      completedAt?: string;
+      duration?: number;
+    };
+    app.logger.info({ gameId: id, markedCount: body.markedCells?.length, bingoCount: body.bingoCount }, 'Updating bingo game progress');
 
     try {
       const [game] = await app.db
@@ -148,11 +157,23 @@ export function register(app: App, fastify: FastifyInstance) {
         return reply.status(404).send({ error: 'Game not found' });
       }
 
-      const updates: any = { markedCells: body.marked_cells };
+      const updates: any = { markedCells: body.markedCells };
+
+      if (body.bingoCount !== undefined) {
+        updates.bingoCount = body.bingoCount;
+      }
+
+      if (body.duration !== undefined) {
+        updates.duration = body.duration;
+      }
 
       if (body.completed) {
         updates.completed = true;
         updates.completedAt = new Date();
+      }
+
+      if (body.completedAt) {
+        updates.completedAt = new Date(body.completedAt);
       }
 
       const [updatedGame] = await app.db.update(schema.bingoGames)
@@ -160,7 +181,7 @@ export function register(app: App, fastify: FastifyInstance) {
         .where(eq(schema.bingoGames.id, id))
         .returning();
 
-      app.logger.info({ gameId: id, completed: updatedGame.completed }, 'Bingo game updated successfully');
+      app.logger.info({ gameId: id, completed: updatedGame.completed, bingoCount: updatedGame.bingoCount }, 'Bingo game updated successfully');
       return updatedGame;
     } catch (error) {
       app.logger.error({ err: error, gameId: id }, 'Failed to update bingo game');
@@ -207,6 +228,75 @@ export function register(app: App, fastify: FastifyInstance) {
       return { ...game, template };
     } catch (error) {
       app.logger.error({ err: error, gameId: id }, 'Failed to fetch bingo game');
+      throw error;
+    }
+  });
+
+  // POST /api/bingo/games/:id/complete - Complete and save game to history
+  fastify.post('/games/:id/complete', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as {
+      markedCells: number[];
+      bingoCount: number;
+      duration: number;
+    };
+    app.logger.info({ gameId: id, bingoCount: body.bingoCount, duration: body.duration }, 'Completing and saving bingo game');
+
+    try {
+      const [game] = await app.db
+        .select()
+        .from(schema.bingoGames)
+        .where(eq(schema.bingoGames.id, id));
+
+      if (!game) {
+        app.logger.warn({ gameId: id }, 'Game not found for completion');
+        return reply.status(404).send({ error: 'Game not found' });
+      }
+
+      const now = new Date();
+      const [completedGame] = await app.db.update(schema.bingoGames)
+        .set({
+          markedCells: body.markedCells,
+          bingoCount: body.bingoCount,
+          duration: body.duration,
+          completed: true,
+          completedAt: now,
+        })
+        .where(eq(schema.bingoGames.id, id))
+        .returning();
+
+      app.logger.info({ gameId: id, bingoCount: completedGame.bingoCount, duration: completedGame.duration }, 'Bingo game completed and saved successfully');
+      return completedGame;
+    } catch (error) {
+      app.logger.error({ err: error, gameId: id }, 'Failed to complete and save bingo game');
+      throw error;
+    }
+  });
+
+  // GET /api/bingo/games/history - Get user's game history
+  fastify.get('/games/history', async (request, reply) => {
+    app.logger.info({}, 'Fetching user game history');
+
+    try {
+      const games = await app.db
+        .select({
+          id: schema.bingoGames.id,
+          templateName: schema.bingoGames.templateName,
+          items: schema.bingoGames.items,
+          markedCells: schema.bingoGames.markedCells,
+          bingoCount: schema.bingoGames.bingoCount,
+          duration: schema.bingoGames.duration,
+          completedAt: schema.bingoGames.completedAt,
+          createdAt: schema.bingoGames.createdAt,
+        })
+        .from(schema.bingoGames)
+        .where(eq(schema.bingoGames.completed, true))
+        .orderBy(desc(schema.bingoGames.completedAt));
+
+      app.logger.info({ count: games.length }, 'Successfully fetched user game history');
+      return games;
+    } catch (error) {
+      app.logger.error({ err: error }, 'Failed to fetch user game history');
       throw error;
     }
   });

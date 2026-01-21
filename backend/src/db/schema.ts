@@ -17,7 +17,10 @@ export const bingoGames = pgTable('bingo_games', {
   completed: boolean('completed').default(false).notNull(),
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  startedAt: timestamp('started_at').defaultNow().notNull(),
+  items: jsonb('items').$type<string[]>().notNull(),
+  bingoCount: integer('bingo_count').default(0).notNull(),
+  duration: integer('duration'),
   durationSeconds: integer('duration_seconds'),
   goalReached: text('goal_reached'),
-  items: jsonb('items').$type<string[]>(),
 });
