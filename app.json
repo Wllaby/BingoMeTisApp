@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Bingo Bonanza",
@@ -8,8 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
-      "resizeMode": "contain",
+      "image": "./assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg",
+      "resizeMode": "cover",
       "backgroundColor": "#000000"
     },
     "ios": {
