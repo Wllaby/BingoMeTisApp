@@ -103,19 +103,47 @@ export default function HomeScreen() {
     }
   };
 
+  const shuffleArray = (array: string[]) => {
+    console.log('HomeScreen: Shuffling array of', array.length, 'items using Fisher-Yates algorithm');
+    const newArray = [...array];
+    // Fisher-Yates shuffle algorithm for true randomization
+    // This ensures every permutation has equal probability
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    console.log('HomeScreen: Shuffle complete - first 3 items:', newArray.slice(0, 3));
+    return newArray;
+  };
+
   const startNewGame = async (template: BingoTemplate) => {
     console.log('HomeScreen: Starting new game with template', template.name);
+    console.log('HomeScreen: Template has', template.items.length, 'total options available');
     try {
       // TODO: Backend Integration - POST /api/bingo/games with { template_id: template.id }
-      // Shuffle and take only 25 items for a 5x5 grid
+      
+      // Step 1: Shuffle the entire options list to get random order
       const shuffledItems = shuffleArray([...template.items]);
-      const gameItems = shuffledItems.slice(0, 25);
+      
+      // Step 2: Take first 24 items from shuffled list (these are random due to shuffle)
+      const selectedItems = shuffledItems.slice(0, 24);
+      console.log('HomeScreen: Selected 24 random items from shuffled list');
+      
+      // Step 3: Create the 25-item array with FREE SPACE in the center (index 12)
+      const gameItems = [
+        ...selectedItems.slice(0, 12),  // First 12 items (indices 0-11)
+        "FREE SPACE",                    // Center cell (index 12)
+        ...selectedItems.slice(12, 24)   // Last 12 items (indices 13-24)
+      ];
+      
+      console.log('HomeScreen: Bingo card created with FREE SPACE at center (index 12)');
+      console.log('HomeScreen: Sample items on card:', gameItems.slice(0, 3), '...', gameItems.slice(22, 25));
       
       const newGame: BingoGame = {
         id: Date.now().toString(),
         template_id: template.id,
         template_name: template.name,
-        marked_cells: [],
+        marked_cells: [12], // FREE SPACE is automatically marked
         completed: false,
         items: gameItems
       };
@@ -127,24 +155,21 @@ export default function HomeScreen() {
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      console.log('HomeScreen: Game started with 25 items', newGame.id);
+      console.log('HomeScreen: Game started', newGame.id);
     } catch (error) {
       console.error('HomeScreen: Error starting game', error);
       Alert.alert('Error', 'Failed to start game');
     }
   };
 
-  const shuffleArray = (array: string[]) => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-  };
-
   const toggleCell = async (index: number) => {
     if (!currentGame) return;
+    
+    // Don't allow toggling the FREE SPACE
+    if (index === 12) {
+      console.log('HomeScreen: Cannot toggle FREE SPACE');
+      return;
+    }
     
     console.log('HomeScreen: Toggling cell', index);
     const newMarkedCells = currentGame.marked_cells.includes(index)
@@ -208,6 +233,7 @@ export default function HomeScreen() {
   };
 
   if (loading) {
+    const loadingText = "Loading...";
     return (
       <ImageBackground 
         source={backgroundImage} 
@@ -216,7 +242,7 @@ export default function HomeScreen() {
       >
         <View style={styles.overlay} />
         <Stack.Screen options={{ headerShown: false }} />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>{loadingText}</Text>
       </ImageBackground>
     );
   }
@@ -240,35 +266,38 @@ export default function HomeScreen() {
             <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
           </View>
 
-          {templates.map((template) => (
-            <TouchableOpacity
-              key={template.id}
-              style={styles.templateCard}
-              onPress={() => startNewGame(template)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.templateHeader}>
-                <Text style={styles.templateName}>{template.name}</Text>
-                {template.is_custom && (
-                  <View style={styles.customBadge}>
-                    <Text style={styles.customBadgeText}>Custom</Text>
-                  </View>
+          {templates.map((template) => {
+            const templateKey = template.id;
+            return (
+              <TouchableOpacity
+                key={templateKey}
+                style={styles.templateCard}
+                onPress={() => startNewGame(template)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.templateHeader}>
+                  <Text style={styles.templateName}>{template.name}</Text>
+                  {template.is_custom && (
+                    <View style={styles.customBadge}>
+                      <Text style={styles.customBadgeText}>Custom</Text>
+                    </View>
+                  )}
+                </View>
+                {template.description && (
+                  <Text style={styles.templateDescription}>{template.description}</Text>
                 )}
-              </View>
-              {template.description && (
-                <Text style={styles.templateDescription}>{template.description}</Text>
-              )}
-              <View style={styles.templateFooter}>
-                <IconSymbol 
-                  ios_icon_name="play.circle.fill" 
-                  android_material_icon_name="play-arrow"
-                  size={20} 
-                  color={colors.primary} 
-                />
-                <Text style={styles.playText}>Play</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.templateFooter}>
+                  <IconSymbol 
+                    ios_icon_name="play.circle.fill" 
+                    android_material_icon_name="play-arrow"
+                    size={20} 
+                    color={colors.primary} 
+                  />
+                  <Text style={styles.playText}>Play</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
 
           <TouchableOpacity
             style={styles.createButton}
@@ -309,6 +338,10 @@ export default function HomeScreen() {
   }
 
   // Game view
+  const markedCount = currentGame?.marked_cells.length || 0;
+  const markedCountText = markedCount.toString();
+  const totalCountText = " / 25 marked";
+  
   return (
     <ImageBackground 
       source={backgroundImage} 
@@ -333,10 +366,10 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <View style={styles.gameHeaderText}>
             <Text style={styles.gameTitle}>{currentGame?.template_name}</Text>
-            <Text style={styles.gameSubtitle}>
-              {currentGame?.marked_cells.length || 0}
-            </Text>
-            <Text style={styles.gameSubtitle}> / 25 marked</Text>
+            <View style={styles.markedCountContainer}>
+              <Text style={styles.gameSubtitle}>{markedCountText}</Text>
+              <Text style={styles.gameSubtitle}>{totalCountText}</Text>
+            </View>
           </View>
           <TouchableOpacity 
             onPress={() => {
@@ -358,10 +391,11 @@ export default function HomeScreen() {
           {currentGame?.items?.slice(0, 25).map((item, index) => {
             const isMarked = currentGame.marked_cells.includes(index);
             const isFreeSpace = index === 12; // Center cell
+            const cellKey = index;
             
             return (
               <TouchableOpacity
-                key={index}
+                key={cellKey}
                 style={[
                   styles.bingoCell,
                   isMarked && styles.bingoCellMarked,
@@ -404,7 +438,7 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.newGameButton}
           onPress={() => {
-            console.log('HomeScreen: New game button tapped');
+            console.log('HomeScreen: New Card button tapped - generating new random card');
             if (selectedTemplate) {
               startNewGame(selectedTemplate);
             }
@@ -417,7 +451,7 @@ export default function HomeScreen() {
             size={20} 
             color={colors.card} 
           />
-          <Text style={styles.newGameButtonText}>New Game (Same Theme)</Text>
+          <Text style={styles.newGameButtonText}>New Card</Text>
         </TouchableOpacity>
       </ScrollView>
     </ImageBackground>
@@ -580,6 +614,10 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 10,
+  },
+  markedCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   gameSubtitle: {
     fontSize: 14,
