@@ -16,6 +16,7 @@ import { Stack } from "expo-router";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import * as Haptics from "expo-haptics";
+import { KidsOptions } from "@/data/KidsOptions";
 
 const { width } = Dimensions.get('window');
 const CELL_SIZE = (width - 80) / 5;
@@ -76,9 +77,9 @@ export default function HomeScreen() {
         },
         {
           id: '2',
-          name: 'Birds',
-          description: 'Spot different bird species',
-          items: ["Robin", "Blue Jay", "Cardinal", "Sparrow", "Crow", "Eagle", "Hawk", "Owl", "Woodpecker", "Hummingbird", "Pigeon", "Seagull", "Pelican", "Flamingo", "Penguin", "Parrot", "Toucan", "Peacock", "Swan", "Duck", "Goose", "Turkey", "Chicken", "Ostrich", "Emu"],
+          name: 'Kids',
+          description: 'Fun things kids love',
+          items: KidsOptions,
           is_custom: false,
           created_at: new Date().toISOString()
         },
@@ -295,8 +296,9 @@ export default function HomeScreen() {
           <View style={styles.gameHeaderText}>
             <Text style={styles.gameTitle}>{currentGame?.template_name}</Text>
             <Text style={styles.gameSubtitle}>
-              {currentGame?.marked_cells.length || 0} / 25 marked
+              {currentGame?.marked_cells.length || 0}
             </Text>
+            <Text style={styles.gameSubtitle}> / 25 marked</Text>
           </View>
           <TouchableOpacity 
             onPress={() => {
