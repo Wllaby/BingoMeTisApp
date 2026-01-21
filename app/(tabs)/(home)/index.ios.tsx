@@ -106,20 +106,24 @@ export default function HomeScreen() {
     console.log('HomeScreen (iOS): Starting new game with template', template.name);
     try {
       // TODO: Backend Integration - POST /api/bingo/games with { template_id: template.id }
+      // Shuffle and take only 25 items for a 5x5 grid
+      const shuffledItems = shuffleArray([...template.items]);
+      const gameItems = shuffledItems.slice(0, 25);
+      
       const newGame: BingoGame = {
         id: Date.now().toString(),
         template_id: template.id,
         template_name: template.name,
         marked_cells: [],
         completed: false,
-        items: shuffleArray([...template.items])
+        items: gameItems
       };
       
       setCurrentGame(newGame);
       setSelectedTemplate(template);
       setShowTemplateList(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      console.log('HomeScreen (iOS): Game started', newGame.id);
+      console.log('HomeScreen (iOS): Game started with 25 items', newGame.id);
     } catch (error) {
       console.error('HomeScreen (iOS): Error starting game', error);
       Alert.alert('Error', 'Failed to start game');
@@ -335,7 +339,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.bingoGrid}>
-          {currentGame?.items?.map((item, index) => {
+          {currentGame?.items?.slice(0, 25).map((item, index) => {
             const isMarked = currentGame.marked_cells.includes(index);
             const isFreeSpace = index === 12;
             
