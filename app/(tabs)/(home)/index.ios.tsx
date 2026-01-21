@@ -8,7 +8,9 @@ import {
   ScrollView, 
   Alert,
   Dimensions,
-  Platform
+  Platform,
+  ImageBackground,
+  ImageSourcePropType
 } from "react-native";
 import { Stack } from "expo-router";
 import { colors } from "@/styles/commonStyles";
@@ -17,6 +19,13 @@ import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get('window');
 const CELL_SIZE = (width - 80) / 5;
+
+// Helper to resolve image sources (handles both local require() and remote URLs)
+function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
+  if (!source) return { uri: '' };
+  if (typeof source === 'string') return { uri: source };
+  return source as ImageSourcePropType;
+}
 
 interface BingoTemplate {
   id: string;
@@ -44,6 +53,8 @@ export default function HomeScreen() {
   const [currentGame, setCurrentGame] = useState<BingoGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTemplateList, setShowTemplateList] = useState(true);
+
+  const backgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
 
   useEffect(() => {
     console.log('HomeScreen (iOS): Loading templates');
@@ -177,16 +188,26 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <ImageBackground 
+        source={backgroundImage} 
+        style={styles.container}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
         <Stack.Screen options={{ headerShown: false }} />
         <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      </ImageBackground>
     );
   }
 
   if (showTemplateList) {
     return (
-      <View style={styles.container}>
+      <ImageBackground 
+        source={backgroundImage} 
+        style={styles.container}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
         <Stack.Screen options={{ headerShown: false }} />
         <ScrollView 
           style={styles.scrollView}
@@ -194,7 +215,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>🎯 Bingo!</Text>
+            <Text style={styles.headerTitle}>🎯 Bingo MeTis</Text>
             <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
           </View>
 
@@ -245,12 +266,17 @@ export default function HomeScreen() {
             <Text style={styles.createButtonText}>Create Custom Template</Text>
           </TouchableOpacity>
         </ScrollView>
-      </View>
+      </ImageBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ImageBackground 
+      source={backgroundImage} 
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay} />
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView 
         style={styles.scrollView}
@@ -354,14 +380,17 @@ export default function HomeScreen() {
           <Text style={styles.newGameButtonText}>New Game (Same Theme)</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   scrollView: {
     flex: 1,
@@ -377,7 +406,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 18,
-    color: colors.text,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   header: {
     alignItems: 'center',
@@ -387,15 +417,21 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   templateCard: {
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -403,9 +439,9 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   templateHeader: {
     flexDirection: 'row',
@@ -450,7 +486,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 16,
     padding: 20,
     marginTop: 8,
@@ -472,6 +508,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
   },
   gameHeaderText: {
     flex: 1,
@@ -480,15 +518,23 @@ const styles = StyleSheet.create({
   gameTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
   },
   gameSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   shareButton: {
     padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
   },
   bingoGrid: {
     flexDirection: 'row',
@@ -503,7 +549,7 @@ const styles = StyleSheet.create({
     height: (width - 60) / 5,
     maxWidth: 96,
     maxHeight: 96,
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 8,
     borderWidth: 2,
     borderColor: colors.cardBorder,
