@@ -18,7 +18,6 @@ import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import * as Haptics from "expo-haptics";
-import { KidsOptions } from "@/data/KidsOptions";
 import ConfettiCannon from 'react-native-confetti-cannon';
 
 const { width, height } = Dimensions.get('window');
@@ -69,9 +68,11 @@ export default function HomeScreen() {
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
+  const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/f9e5286f-d4ff-421f-a076-b32cc5073725.png'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : defaultBackgroundImage;
+  const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : defaultBackgroundImage;
 
   useEffect(() => {
     console.log('HomeScreen: Loading templates');
