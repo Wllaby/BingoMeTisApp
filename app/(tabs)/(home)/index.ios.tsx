@@ -12,7 +12,7 @@ import {
   ImageBackground,
   ImageSourcePropType
 } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import * as Haptics from "expo-haptics";
@@ -49,6 +49,7 @@ interface BingoGame {
 export default function HomeScreen() {
   console.log('HomeScreen (iOS): Component mounted');
   
+  const router = useRouter();
   const [templates, setTemplates] = useState<BingoTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<BingoTemplate | null>(null);
   const [currentGame, setCurrentGame] = useState<BingoGame | null>(null);
@@ -265,6 +266,23 @@ export default function HomeScreen() {
               color={colors.primary} 
             />
             <Text style={styles.createButtonText}>Create Custom Template</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={() => {
+              console.log('HomeScreen (iOS): Upload Excel button tapped');
+              router.push('/admin-upload');
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="arrow.up.doc.fill" 
+              android_material_icon_name="upload"
+              size={24} 
+              color={colors.primary} 
+            />
+            <Text style={styles.uploadButtonText}>Upload Kids Options (Excel)</Text>
           </TouchableOpacity>
         </ScrollView>
       </ImageBackground>
@@ -497,6 +515,23 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  uploadButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
