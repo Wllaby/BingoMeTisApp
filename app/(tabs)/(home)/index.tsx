@@ -56,7 +56,15 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [showTemplateList, setShowTemplateList] = useState(true);
 
-  const backgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  // Use the old image as default background
+  const defaultBackgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  
+  // Use the new image for Kids theme
+  const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
+  
+  // Determine which background to use
+  const isKidsTheme = selectedTemplate?.name === 'Kids';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : defaultBackgroundImage;
 
   useEffect(() => {
     console.log('HomeScreen: Loading templates');
@@ -236,7 +244,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={backgroundImage} 
+        source={defaultBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
@@ -250,7 +258,7 @@ export default function HomeScreen() {
   if (showTemplateList) {
     return (
       <ImageBackground 
-        source={backgroundImage} 
+        source={defaultBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >

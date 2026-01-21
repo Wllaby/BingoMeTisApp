@@ -19,7 +19,7 @@ import * as Haptics from "expo-haptics";
 import { KidsOptions } from "@/data/KidsOptions";
 
 const { width } = Dimensions.get('window');
-const CELL_SIZE = (width - 80) / 5;
+const CELL_SIZE = (width - 80) / 5; // 5x5 grid with padding
 
 // Helper to resolve image sources (handles both local require() and remote URLs)
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
@@ -47,7 +47,7 @@ interface BingoGame {
 }
 
 export default function HomeScreen() {
-  console.log('HomeScreen (iOS): Component mounted');
+  console.log('HomeScreen: Component mounted');
   
   const router = useRouter();
   const [templates, setTemplates] = useState<BingoTemplate[]>([]);
@@ -56,17 +56,26 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [showTemplateList, setShowTemplateList] = useState(true);
 
-  const backgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  // Use the old image as default background
+  const defaultBackgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  
+  // Use the new image for Kids theme
+  const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
+  
+  // Determine which background to use
+  const isKidsTheme = selectedTemplate?.name === 'Kids';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : defaultBackgroundImage;
 
   useEffect(() => {
-    console.log('HomeScreen (iOS): Loading templates');
+    console.log('HomeScreen: Loading templates');
     loadTemplates();
   }, []);
 
   const loadTemplates = async () => {
     try {
-      console.log('HomeScreen (iOS): Fetching templates from API');
+      console.log('HomeScreen: Fetching templates from API');
       // TODO: Backend Integration - GET /api/bingo/templates
+      // Temporary mock data
       const mockTemplates: BingoTemplate[] = [
         {
           id: '1',
@@ -95,15 +104,15 @@ export default function HomeScreen() {
       ];
       setTemplates(mockTemplates);
       setLoading(false);
-      console.log('HomeScreen (iOS): Templates loaded', mockTemplates.length);
+      console.log('HomeScreen: Templates loaded', mockTemplates.length);
     } catch (error) {
-      console.error('HomeScreen (iOS): Error loading templates', error);
+      console.error('HomeScreen: Error loading templates', error);
       setLoading(false);
     }
   };
 
   const shuffleArray = (array: string[]) => {
-    console.log('HomeScreen (iOS): Shuffling array of', array.length, 'items using Fisher-Yates algorithm');
+    console.log('HomeScreen: Shuffling array of', array.length, 'items using Fisher-Yates algorithm');
     const newArray = [...array];
     // Fisher-Yates shuffle algorithm for true randomization
     // This ensures every permutation has equal probability
@@ -111,13 +120,13 @@ export default function HomeScreen() {
       const j = Math.floor(Math.random() * (i + 1));
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
-    console.log('HomeScreen (iOS): Shuffle complete - first 3 items:', newArray.slice(0, 3));
+    console.log('HomeScreen: Shuffle complete - first 3 items:', newArray.slice(0, 3));
     return newArray;
   };
 
   const startNewGame = async (template: BingoTemplate) => {
-    console.log('HomeScreen (iOS): Starting new game with template', template.name);
-    console.log('HomeScreen (iOS): Template has', template.items.length, 'total options available');
+    console.log('HomeScreen: Starting new game with template', template.name);
+    console.log('HomeScreen: Template has', template.items.length, 'total options available');
     try {
       // TODO: Backend Integration - POST /api/bingo/games with { template_id: template.id }
       
@@ -126,7 +135,7 @@ export default function HomeScreen() {
       
       // Step 2: Take first 24 items from shuffled list (these are random due to shuffle)
       const selectedItems = shuffledItems.slice(0, 24);
-      console.log('HomeScreen (iOS): Selected 24 random items from shuffled list');
+      console.log('HomeScreen: Selected 24 random items from shuffled list');
       
       // Step 3: Create the 25-item array with FREE SPACE in the center (index 12)
       const gameItems = [
@@ -135,8 +144,8 @@ export default function HomeScreen() {
         ...selectedItems.slice(12, 24)   // Last 12 items (indices 13-24)
       ];
       
-      console.log('HomeScreen (iOS): Bingo card created with FREE SPACE at center (index 12)');
-      console.log('HomeScreen (iOS): Sample items on card:', gameItems.slice(0, 3), '...', gameItems.slice(22, 25));
+      console.log('HomeScreen: Bingo card created with FREE SPACE at center (index 12)');
+      console.log('HomeScreen: Sample items on card:', gameItems.slice(0, 3), '...', gameItems.slice(22, 25));
       
       const newGame: BingoGame = {
         id: Date.now().toString(),
@@ -150,10 +159,13 @@ export default function HomeScreen() {
       setCurrentGame(newGame);
       setSelectedTemplate(template);
       setShowTemplateList(false);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      console.log('HomeScreen (iOS): Game started', newGame.id);
+      
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+      console.log('HomeScreen: Game started', newGame.id);
     } catch (error) {
-      console.error('HomeScreen (iOS): Error starting game', error);
+      console.error('HomeScreen: Error starting game', error);
       Alert.alert('Error', 'Failed to start game');
     }
   };
@@ -163,11 +175,11 @@ export default function HomeScreen() {
     
     // Don't allow toggling the FREE SPACE
     if (index === 12) {
-      console.log('HomeScreen (iOS): Cannot toggle FREE SPACE');
+      console.log('HomeScreen: Cannot toggle FREE SPACE');
       return;
     }
     
-    console.log('HomeScreen (iOS): Toggling cell', index);
+    console.log('HomeScreen: Toggling cell', index);
     const newMarkedCells = currentGame.marked_cells.includes(index)
       ? currentGame.marked_cells.filter(i => i !== index)
       : [...currentGame.marked_cells, index];
@@ -178,29 +190,38 @@ export default function HomeScreen() {
     };
     
     setCurrentGame(updatedGame);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    // Check for bingo
     if (checkBingo(newMarkedCells)) {
-      console.log('HomeScreen (iOS): BINGO!');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('HomeScreen: BINGO!');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert('🎉 BINGO!', 'Congratulations! You got a bingo!', [
-        { text: 'OK', onPress: () => console.log('HomeScreen (iOS): Bingo alert dismissed') }
+        { text: 'OK', onPress: () => console.log('HomeScreen: Bingo alert dismissed') }
       ]);
       // TODO: Backend Integration - PUT /api/bingo/games/:id with { marked_cells, completed: true }
     }
   };
 
   const checkBingo = (markedCells: number[]): boolean => {
+    // Check rows
     for (let row = 0; row < 5; row++) {
       const rowCells = [row * 5, row * 5 + 1, row * 5 + 2, row * 5 + 3, row * 5 + 4];
       if (rowCells.every(cell => markedCells.includes(cell))) return true;
     }
     
+    // Check columns
     for (let col = 0; col < 5; col++) {
       const colCells = [col, col + 5, col + 10, col + 15, col + 20];
       if (colCells.every(cell => markedCells.includes(cell))) return true;
     }
     
+    // Check diagonals
     const diagonal1 = [0, 6, 12, 18, 24];
     const diagonal2 = [4, 8, 12, 16, 20];
     if (diagonal1.every(cell => markedCells.includes(cell))) return true;
@@ -210,18 +231,20 @@ export default function HomeScreen() {
   };
 
   const resetGame = () => {
-    console.log('HomeScreen (iOS): Resetting game');
+    console.log('HomeScreen: Resetting game');
     setCurrentGame(null);
     setSelectedTemplate(null);
     setShowTemplateList(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   };
 
   if (loading) {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={backgroundImage} 
+        source={defaultBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
@@ -235,7 +258,7 @@ export default function HomeScreen() {
   if (showTemplateList) {
     return (
       <ImageBackground 
-        source={backgroundImage} 
+        source={defaultBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
@@ -287,7 +310,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.createButton}
             onPress={() => {
-              console.log('HomeScreen (iOS): Create custom template tapped');
+              console.log('HomeScreen: Create custom template tapped');
               Alert.alert('Coming Soon', 'Custom template creation will be available soon!');
             }}
             activeOpacity={0.7}
@@ -304,7 +327,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.uploadButton}
             onPress={() => {
-              console.log('HomeScreen (iOS): Upload Excel button tapped');
+              console.log('HomeScreen: Upload Excel button tapped');
               router.push('/admin-upload');
             }}
             activeOpacity={0.7}
@@ -322,10 +345,11 @@ export default function HomeScreen() {
     );
   }
 
+  // Game view
   const markedCount = currentGame?.marked_cells.length || 0;
   const markedCountText = markedCount.toString();
   const totalCountText = " / 25 marked";
-
+  
   return (
     <ImageBackground 
       source={backgroundImage} 
@@ -357,7 +381,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             onPress={() => {
-              console.log('HomeScreen (iOS): Share button tapped');
+              console.log('HomeScreen: Share button tapped');
               Alert.alert('Coming Soon', 'Share functionality will be available soon!');
             }}
             style={styles.shareButton}
@@ -374,7 +398,7 @@ export default function HomeScreen() {
         <View style={styles.bingoGrid}>
           {currentGame?.items?.slice(0, 25).map((item, index) => {
             const isMarked = currentGame.marked_cells.includes(index);
-            const isFreeSpace = index === 12;
+            const isFreeSpace = index === 12; // Center cell
             const cellKey = index;
             
             return (
@@ -422,7 +446,7 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.newGameButton}
           onPress={() => {
-            console.log('HomeScreen (iOS): New Card button tapped - generating new random card');
+            console.log('HomeScreen: New Card button tapped - generating new random card');
             if (selectedTemplate) {
               startNewGame(selectedTemplate);
             }
@@ -445,6 +469,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
