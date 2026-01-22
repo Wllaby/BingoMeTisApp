@@ -13,7 +13,7 @@ import {
   ImageSourcePropType,
   Modal
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useFocusEffect } from "expo-router";
 import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -74,10 +74,15 @@ export default function HomeScreen() {
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
   const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : defaultBackgroundImage;
 
-  useEffect(() => {
-    console.log('HomeScreen: Loading templates');
-    loadTemplates();
-  }, []);
+  // Reload templates when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('HomeScreen: Screen focused, reloading templates');
+      if (showTemplateList) {
+        loadTemplates();
+      }
+    }, [showTemplateList])
+  );
 
   const loadTemplates = async () => {
     try {
@@ -447,6 +452,9 @@ export default function HomeScreen() {
   }
 
   if (showTemplateList) {
+    const customTemplates = templates.filter(t => t.is_custom);
+    const hasCustomTemplates = customTemplates.length > 0;
+    
     return (
       <ImageBackground 
         source={defaultBackgroundImage} 
@@ -485,13 +493,13 @@ export default function HomeScreen() {
             );
           })}
 
-          {templates.filter(t => t.is_custom).length > 0 && (
+          {hasCustomTemplates && (
             <React.Fragment>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Custom themes and games</Text>
               </View>
 
-              {templates.filter(t => t.is_custom).map((template) => {
+              {customTemplates.map((template) => {
                 const templateKey = template.id;
                 return (
                   <TouchableOpacity
