@@ -164,6 +164,37 @@ export function register(app: App, fastify: FastifyInstance) {
     }
   });
 
+  // DELETE /api/bingo/templates/:id - Delete custom template
+  fastify.delete('/templates/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    app.logger.info({ templateId: id }, 'Deleting bingo template');
+
+    try {
+      const [template] = await app.db
+        .select()
+        .from(schema.bingoTemplates)
+        .where(eq(schema.bingoTemplates.id, id));
+
+      if (!template) {
+        app.logger.warn({ templateId: id }, 'Template not found for deletion');
+        return reply.status(404).send({ error: 'Template not found' });
+      }
+
+      if (!template.isCustom) {
+        app.logger.warn({ templateId: id, templateName: template.name }, 'Attempted to delete default template');
+        return reply.status(403).send({ error: 'Cannot delete default templates' });
+      }
+
+      await app.db.delete(schema.bingoTemplates).where(eq(schema.bingoTemplates.id, id));
+
+      app.logger.info({ templateId: id, templateName: template.name }, 'Custom template deleted successfully');
+      return { success: true, message: 'Template deleted successfully' };
+    } catch (error) {
+      app.logger.error({ err: error, templateId: id }, 'Failed to delete template');
+      throw error;
+    }
+  });
+
   // POST /api/bingo/templates/:id/share - Generate share code for template
   fastify.post('/templates/:id/share', async (request, reply) => {
     const { id } = request.params as { id: string };
