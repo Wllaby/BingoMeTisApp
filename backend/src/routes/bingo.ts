@@ -116,20 +116,24 @@ export function register(app: App, fastify: FastifyInstance) {
     app.logger.info({ name: body.name, itemCount: body.items?.length }, 'Creating custom bingo template');
 
     try {
-      if (!body.name || !body.items || body.items.length !== 25) {
-        app.logger.warn({ name: body.name, itemCount: body.items?.length }, 'Invalid template: must have exactly 25 items');
-        return reply.status(400).send({ error: 'Template must have exactly 25 items' });
+      if (!body.name || !body.items || body.items.length < 25 || body.items.length > 100) {
+        app.logger.warn({ name: body.name, itemCount: body.items?.length }, 'Invalid template: must have between 25 and 100 items');
+        return reply.status(400).send({ error: 'Template must have between 25 and 100 items' });
       }
+
+      // Generate a unique share code for the custom template
+      const shareCode = generateShareCode();
 
       const [template] = await app.db.insert(schema.bingoTemplates).values({
         name: body.name,
         description: body.description,
         items: body.items,
         isCustom: true,
+        code: shareCode,
       }).returning();
 
-      app.logger.info({ templateId: template.id, name: template.name }, 'Custom bingo template created successfully');
-      return template;
+      app.logger.info({ templateId: template.id, name: template.name, code: shareCode }, 'Custom bingo template created successfully with share code');
+      return { ...template, code: shareCode };
     } catch (error) {
       app.logger.error({ err: error, name: body.name }, 'Failed to create custom bingo template');
       throw error;
