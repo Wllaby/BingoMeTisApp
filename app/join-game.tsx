@@ -10,6 +10,10 @@ import {
   Alert,
   ImageBackground,
   ImageSourcePropType,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -37,6 +41,9 @@ export default function JoinGameScreen() {
 
   const handleJoinGame = async () => {
     console.log('JoinGameScreen: Join game tapped with code:', gameCode);
+    
+    // Dismiss keyboard before processing
+    Keyboard.dismiss();
     
     if (!gameCode.trim()) {
       Alert.alert('Error', 'Please enter a game code');
@@ -121,68 +128,84 @@ export default function JoinGameScreen() {
         }} 
       />
       
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <IconSymbol 
-            ios_icon_name="link.circle.fill" 
-            android_material_icon_name="link"
-            size={80} 
-            color="#FFFFFF" 
-          />
-        </View>
-
-        <Text style={styles.title}>Join a Game</Text>
-        <Text style={styles.subtitle}>Enter the game code shared by your friend</Text>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter game code"
-            placeholderTextColor="rgba(0, 0, 0, 0.4)"
-            value={gameCode}
-            onChangeText={setGameCode}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            maxLength={10}
-          />
-        </View>
-
-        {gameCode.length > 0 && (
-          <View style={styles.codePreview}>
-            <Text style={styles.codePreviewLabel}>Code:</Text>
-            <Text style={styles.codePreviewText}>{codeUppercase}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.joinButton, loading && styles.joinButtonDisabled]}
-          onPress={handleJoinGame}
-          disabled={loading}
-          activeOpacity={0.7}
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <IconSymbol 
-            ios_icon_name="checkmark.circle.fill" 
-            android_material_icon_name="check-circle"
-            size={24} 
-            color={colors.card} 
-          />
-          <Text style={styles.joinButtonText}>
-            {loading ? 'Joining...' : 'Join Game'}
-          </Text>
-        </TouchableOpacity>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.content}>
+              <View style={styles.iconContainer}>
+                <IconSymbol 
+                  ios_icon_name="link.circle.fill" 
+                  android_material_icon_name="link"
+                  size={80} 
+                  color="#FFFFFF" 
+                />
+              </View>
 
-        <View style={styles.infoBox}>
-          <IconSymbol 
-            ios_icon_name="info.circle.fill" 
-            android_material_icon_name="info"
-            size={20} 
-            color={colors.primary} 
-          />
-          <Text style={styles.infoText}>
-            Game codes are shared when someone creates a custom theme and wants to play with friends.
-          </Text>
-        </View>
-      </View>
+              <Text style={styles.title}>Join a Game</Text>
+              <Text style={styles.subtitle}>Enter the game code shared by your friend</Text>
+
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter game code"
+                  placeholderTextColor="rgba(0, 0, 0, 0.4)"
+                  value={gameCode}
+                  onChangeText={setGameCode}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={10}
+                  returnKeyType="done"
+                  onSubmitEditing={handleJoinGame}
+                />
+              </View>
+
+              {gameCode.length > 0 && (
+                <View style={styles.codePreview}>
+                  <Text style={styles.codePreviewLabel}>Code:</Text>
+                  <Text style={styles.codePreviewText}>{codeUppercase}</Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[styles.joinButton, loading && styles.joinButtonDisabled]}
+                onPress={handleJoinGame}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="checkmark.circle.fill" 
+                  android_material_icon_name="check-circle"
+                  size={24} 
+                  color={colors.card} 
+                />
+                <Text style={styles.joinButtonText}>
+                  {loading ? 'Joining...' : 'Join Game'}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.infoBox}>
+                <IconSymbol 
+                  ios_icon_name="info.circle.fill" 
+                  android_material_icon_name="info"
+                  size={20} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.infoText}>
+                  Game codes are shared when someone creates a custom theme and wants to play with friends.
+                </Text>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }
@@ -196,11 +219,19 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   content: {
     flex: 1,
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    minHeight: 600,
   },
   iconContainer: {
     marginBottom: 30,
