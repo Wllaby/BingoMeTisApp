@@ -70,7 +70,14 @@ export function register(app: App, fastify: FastifyInstance) {
       },
     ];
 
-    // Check each template and insert only if it doesn't exist
+    // Delete old templates that are no longer in the default set
+    const oldTemplateNames = ["Office Jargon", "Birds", "Things kids do"];
+    for (const oldName of oldTemplateNames) {
+      await app.db.delete(schema.bingoTemplates).where(eq(schema.bingoTemplates.name, oldName));
+      app.logger.info({ templateName: oldName }, 'Deleted old bingo template');
+    }
+
+    // Check each template and insert/update as needed
     for (const template of defaultTemplates) {
       const [existingTemplate] = await app.db
         .select()
@@ -80,6 +87,12 @@ export function register(app: App, fastify: FastifyInstance) {
       if (!existingTemplate) {
         await app.db.insert(schema.bingoTemplates).values(template);
         app.logger.info({ templateName: template.name }, 'Seeded default bingo template');
+      } else if (existingTemplate.description !== template.description) {
+        // Update description if it changed
+        await app.db.update(schema.bingoTemplates)
+          .set({ description: template.description })
+          .where(eq(schema.bingoTemplates.name, template.name));
+        app.logger.info({ templateName: template.name }, 'Updated bingo template description');
       }
     }
   });
