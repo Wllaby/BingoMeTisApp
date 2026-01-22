@@ -14,6 +14,7 @@ export const colors = {
   marked: '#4ECDC4',       // Teal for marked cells
   bingo: '#FF6B6B',        // Red for bingo win
   highlight: '#FFE66D',    // Yellow highlight
+  error: '#E74C3C',        // Red for errors
 };
 
 export const buttonStyles = StyleSheet.create({

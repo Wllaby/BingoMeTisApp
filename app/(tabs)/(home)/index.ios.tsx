@@ -464,7 +464,7 @@ export default function HomeScreen() {
             <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
           </View>
 
-          {templates.map((template) => {
+          {templates.filter(t => !t.is_custom).map((template) => {
             const templateKey = template.id;
             return (
               <TouchableOpacity
@@ -476,11 +476,6 @@ export default function HomeScreen() {
                 <View style={styles.templateContent}>
                   <View style={styles.templateHeader}>
                     <Text style={styles.templateName}>{template.name}</Text>
-                    {template.is_custom && (
-                      <View style={styles.customBadge}>
-                        <Text style={styles.customBadgeText}>Custom</Text>
-                      </View>
-                    )}
                   </View>
                   {template.description && (
                     <Text style={styles.templateDescription}>{template.description}</Text>
@@ -490,11 +485,43 @@ export default function HomeScreen() {
             );
           })}
 
+          {templates.filter(t => t.is_custom).length > 0 && (
+            <React.Fragment>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Custom themes and games</Text>
+              </View>
+
+              {templates.filter(t => t.is_custom).map((template) => {
+                const templateKey = template.id;
+                return (
+                  <TouchableOpacity
+                    key={templateKey}
+                    style={styles.templateCard}
+                    onPress={() => startNewGame(template)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.templateContent}>
+                      <View style={styles.templateHeader}>
+                        <Text style={styles.templateName}>{template.name}</Text>
+                        <View style={styles.customBadge}>
+                          <Text style={styles.customBadgeText}>Custom</Text>
+                        </View>
+                      </View>
+                      {template.description && (
+                        <Text style={styles.templateDescription}>{template.description}</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </React.Fragment>
+          )}
+
           <TouchableOpacity
             style={styles.createButton}
             onPress={() => {
               console.log('HomeScreen: Create your own theme tapped');
-              Alert.alert('Coming Soon', 'Custom theme creation will be available soon!');
+              router.push('/create-theme');
             }}
             activeOpacity={0.7}
           >
@@ -738,6 +765,18 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 20,
     fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+  },
+  sectionHeader: {
+    marginTop: 32,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
