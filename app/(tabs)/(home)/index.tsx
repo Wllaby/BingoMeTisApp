@@ -19,6 +19,9 @@ import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import * as Haptics from "expo-haptics";
 import ConfettiCannon from 'react-native-confetti-cannon';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, runOnJS } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import * as Clipboard from 'expo-clipboard';
 
 const { width, height } = Dimensions.get('window');
 const CELL_SIZE = (width - 80) / 5;
@@ -39,6 +42,7 @@ interface BingoTemplate {
   items: string[];
   is_custom: boolean;
   created_at: string;
+  code?: string;
 }
 
 interface BingoGame {
@@ -51,6 +55,137 @@ interface BingoGame {
   started_at?: string;
   bingo_count: number;
   target_bingo_count: number;
+}
+
+interface SwipeableCustomThemeProps {
+  template: BingoTemplate;
+  onPress: () => void;
+  onDelete: () => void;
+  onCopyCode: () => void;
+}
+
+function SwipeableCustomTheme({ template, onPress, onDelete, onCopyCode }: SwipeableCustomThemeProps) {
+  const translateX = useSharedValue(0);
+  const [isRevealed, setIsRevealed] = useState<'left' | 'right' | null>(null);
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // Limit swipe distance
+      if (event.translationX < -150) {
+        translateX.value = -150;
+      } else if (event.translationX > 150) {
+        translateX.value = 150;
+      } else {
+        translateX.value = event.translationX;
+      }
+    })
+    .onEnd((event) => {
+      const threshold = 80;
+      
+      if (event.translationX < -threshold) {
+        // Swipe left - reveal delete
+        translateX.value = withSpring(-150);
+        runOnJS(setIsRevealed)('left');
+      } else if (event.translationX > threshold) {
+        // Swipe right - reveal share code
+        translateX.value = withSpring(150);
+        runOnJS(setIsRevealed)('right');
+      } else {
+        // Return to center
+        translateX.value = withSpring(0);
+        runOnJS(setIsRevealed)(null);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
+
+  const resetPosition = () => {
+    translateX.value = withSpring(0);
+    setIsRevealed(null);
+  };
+
+  const handlePress = () => {
+    if (isRevealed) {
+      resetPosition();
+    } else {
+      onPress();
+    }
+  };
+
+  const handleDelete = () => {
+    resetPosition();
+    onDelete();
+  };
+
+  const handleCopyCode = () => {
+    resetPosition();
+    onCopyCode();
+  };
+
+  return (
+    <View style={styles.swipeableContainer}>
+      {/* Left action - Delete */}
+      <View style={styles.leftAction}>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={handleDelete}
+          activeOpacity={0.7}
+        >
+          <IconSymbol 
+            ios_icon_name="trash.fill" 
+            android_material_icon_name="delete"
+            size={24} 
+            color="#FFFFFF" 
+          />
+          <Text style={styles.actionText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Right action - Share Code */}
+      <View style={styles.rightAction}>
+        <TouchableOpacity 
+          style={styles.shareCodeButton}
+          onPress={handleCopyCode}
+          activeOpacity={0.7}
+        >
+          <IconSymbol 
+            ios_icon_name="doc.on.doc.fill" 
+            android_material_icon_name="content-copy"
+            size={24} 
+            color="#FFFFFF" 
+          />
+          <Text style={styles.actionText}>Copy Code</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Main card */}
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={[animatedStyle]}>
+          <TouchableOpacity
+            style={styles.templateCard}
+            onPress={handlePress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.templateContent}>
+              <View style={styles.templateHeader}>
+                <Text style={styles.templateName}>{template.name}</Text>
+                <View style={styles.customBadge}>
+                  <Text style={styles.customBadgeText}>Custom</Text>
+                </View>
+              </View>
+              {template.description && (
+                <Text style={styles.templateDescription}>{template.description}</Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
 }
 
 export default function HomeScreen() {
@@ -434,6 +569,124 @@ export default function HomeScreen() {
     }
   };
 
+  const deleteCustomTemplate = async (templateId: string, templateName: string) => {
+    console.log('HomeScreen: Deleting custom template', templateId, templateName);
+    
+    Alert.alert(
+      'Delete Theme',
+      `Are you sure you want to delete "${templateName}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => {
+            console.log('HomeScreen: Delete cancelled');
+          }
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!BACKEND_URL) {
+                console.error('HomeScreen: BACKEND_URL is not configured');
+                Alert.alert('Error', 'Backend URL is not configured');
+                return;
+              }
+
+              console.log('HomeScreen: Sending delete request to backend');
+              const response = await fetch(`${BACKEND_URL}/templates/${templateId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+              }
+
+              console.log('HomeScreen: Template deleted successfully');
+              
+              if (Platform.OS !== 'web') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+
+              // Reload templates to reflect the deletion
+              await loadTemplates();
+              
+              Alert.alert('Success', 'Theme deleted successfully');
+            } catch (error) {
+              console.error('HomeScreen: Error deleting template', error);
+              Alert.alert('Error', 'Failed to delete theme. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const copyShareCode = async (templateId: string, templateName: string) => {
+    console.log('HomeScreen: Copying share code for template', templateId, templateName);
+    
+    try {
+      if (!BACKEND_URL) {
+        console.error('HomeScreen: BACKEND_URL is not configured');
+        Alert.alert('Error', 'Backend URL is not configured');
+        return;
+      }
+
+      // Find the template to get its code
+      const template = templates.find(t => t.id === templateId);
+      
+      if (!template) {
+        console.error('HomeScreen: Template not found');
+        Alert.alert('Error', 'Template not found');
+        return;
+      }
+
+      // Get or generate share code
+      let shareCode = (template as any).code;
+      
+      if (!shareCode) {
+        console.log('HomeScreen: Generating share code for template');
+        const response = await fetch(`${BACKEND_URL}/templates/${templateId}/share`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        shareCode = data.code;
+        console.log('HomeScreen: Share code generated:', shareCode);
+      }
+
+      // Copy to clipboard
+      await Clipboard.setStringAsync(shareCode);
+      console.log('HomeScreen: Share code copied to clipboard:', shareCode);
+      
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+
+      Alert.alert(
+        'Code Copied!',
+        `Share code "${shareCode}" has been copied to your clipboard. Share it with others so they can add this theme to their app!`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('HomeScreen: Error copying share code', error);
+      Alert.alert('Error', 'Failed to copy share code. Please try again.');
+    }
+  };
+
   if (loading) {
     const loadingText = "Loading...";
     return (
@@ -502,24 +755,13 @@ export default function HomeScreen() {
               {customTemplates.map((template) => {
                 const templateKey = template.id;
                 return (
-                  <TouchableOpacity
+                  <SwipeableCustomTheme
                     key={templateKey}
-                    style={styles.templateCard}
+                    template={template}
                     onPress={() => startNewGame(template)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.templateContent}>
-                      <View style={styles.templateHeader}>
-                        <Text style={styles.templateName}>{template.name}</Text>
-                        <View style={styles.customBadge}>
-                          <Text style={styles.customBadgeText}>Custom</Text>
-                        </View>
-                      </View>
-                      {template.description && (
-                        <Text style={styles.templateDescription}>{template.description}</Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
+                    onDelete={() => deleteCustomTemplate(template.id, template.name)}
+                    onCopyCode={() => copyShareCode(template.id, template.name)}
+                  />
                 );
               })}
             </React.Fragment>
@@ -1047,5 +1289,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
+  },
+  swipeableContainer: {
+    position: 'relative',
+    marginBottom: 16,
+    height: 'auto',
+  },
+  leftAction: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 150,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 20,
+  },
+  rightAction: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 150,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingLeft: 20,
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  shareCodeButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
   },
 });
