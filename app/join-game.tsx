@@ -150,7 +150,7 @@ export default function JoinGameScreen() {
               </View>
 
               <Text style={styles.title}>Join a Game</Text>
-              <Text style={styles.subtitle}>Enter the game code shared by your friend</Text>
+              <Text style={styles.subtitle}>Enter the game code shared with you</Text>
 
               <View style={styles.inputContainer}>
                 <TextInput
@@ -199,7 +199,7 @@ export default function JoinGameScreen() {
                   color={colors.primary} 
                 />
                 <Text style={styles.infoText}>
-                  Game codes are shared when someone creates a custom theme and wants to play with friends.
+                  Game codes are unique identifiers for custom created themes that can be shared with others.
                 </Text>
               </View>
             </View>
