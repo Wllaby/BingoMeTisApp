@@ -473,25 +473,18 @@ export default function HomeScreen() {
                 onPress={() => startNewGame(template)}
                 activeOpacity={0.7}
               >
-                <View style={styles.templateHeader}>
-                  <Text style={styles.templateName}>{template.name}</Text>
-                  {template.is_custom && (
-                    <View style={styles.customBadge}>
-                      <Text style={styles.customBadgeText}>Custom</Text>
-                    </View>
+                <View style={styles.templateContent}>
+                  <View style={styles.templateHeader}>
+                    <Text style={styles.templateName}>{template.name}</Text>
+                    {template.is_custom && (
+                      <View style={styles.customBadge}>
+                        <Text style={styles.customBadgeText}>Custom</Text>
+                      </View>
+                    )}
+                  </View>
+                  {template.description && (
+                    <Text style={styles.templateDescription}>{template.description}</Text>
                   )}
-                </View>
-                {template.description && (
-                  <Text style={styles.templateDescription}>{template.description}</Text>
-                )}
-                <View style={styles.templateFooter}>
-                  <IconSymbol 
-                    ios_icon_name="play.circle.fill" 
-                    android_material_icon_name="play-arrow"
-                    size={20} 
-                    color={colors.primary} 
-                  />
-                  <Text style={styles.playText}>Play</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -500,8 +493,8 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.createButton}
             onPress={() => {
-              console.log('HomeScreen: Create custom template tapped');
-              Alert.alert('Coming Soon', 'Custom template creation will be available soon!');
+              console.log('HomeScreen: Create your own theme tapped');
+              Alert.alert('Coming Soon', 'Custom theme creation will be available soon!');
             }}
             activeOpacity={0.7}
           >
@@ -511,7 +504,24 @@ export default function HomeScreen() {
               size={24} 
               color={colors.primary} 
             />
-            <Text style={styles.createButtonText}>Create Custom Template</Text>
+            <Text style={styles.createButtonText}>Create your own theme</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.joinButton}
+            onPress={() => {
+              console.log('HomeScreen: Add/Join a game with a code tapped');
+              router.push('/join-game');
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="link.circle.fill" 
+              android_material_icon_name="link"
+              size={24} 
+              color={colors.primary} 
+            />
+            <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
           </TouchableOpacity>
         </ScrollView>
       </ImageBackground>
@@ -734,17 +744,20 @@ const styles = StyleSheet.create({
     textShadowRadius: 5,
   },
   templateCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+  },
+  templateContent: {
+    width: '100%',
   },
   templateHeader: {
     flexDirection: 'row',
@@ -772,7 +785,6 @@ const styles = StyleSheet.create({
   templateDescription: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 12,
   },
   templateFooter: {
     flexDirection: 'row',
@@ -789,15 +801,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 16,
     padding: 20,
     marginTop: 8,
     borderWidth: 2,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     borderStyle: 'dashed',
   },
   createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  joinButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
