@@ -6,6 +6,7 @@ export const bingoTemplates = pgTable('bingo_templates', {
   description: text('description'),
   items: jsonb('items').$type<string[]>().notNull(),
   isCustom: boolean('is_custom').default(false).notNull(),
+  code: text('code').unique(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
