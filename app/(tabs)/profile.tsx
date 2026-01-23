@@ -44,56 +44,6 @@ export default function HistoryScreen() {
   const [games, setGames] = useState<GameHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const defaultBackgroundImage = resolveImageSource(requireNow I can see the structure. The main page (index.tsx/index.ios.tsx) uses `defaultBackgroundImage` when showing the template list. I need to update the Game History page (profile.tsx/profile.ios.tsx) to use the same background image with an ImageBackground component.
-
-Let me update both profile files to use the same background image as the main page:
-
-<write file="app/(tabs)/profile.tsx">
-import React, { useState, useEffect } from "react";
-import { 
-  SafeAreaView 
-} from "react-native-safe-area-context";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Platform,
-  TouchableOpacity,
-  Alert,
-  ImageBackground,
-  ImageSourcePropType
-} from "react-native";
-import { Stack } from "expo-router";
-import Constants from "expo-constants";
-import { colors } from "@/styles/commonStyles";
-import { IconSymbol } from "@/components/IconSymbol";
-
-// Get backend URL from app.json configuration
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
-
-function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
-  if (!source) return { uri: '' };
-  if (typeof source === 'string') return { uri: source };
-  return source as ImageSourcePropType;
-}
-
-interface GameHistory {
-  id: string;
-  template_name: string;
-  marked_cells: number[];
-  completed: boolean;
-  completed_at?: string;
-  created_at: string;
-  bingo_count?: number;
-}
-
-export default function HistoryScreen() {
-  console.log('HistoryScreen: Component mounted');
-  
-  const [games, setGames] = useState<GameHistory[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
 
   useEffect(() => {
