@@ -309,6 +309,7 @@ export default function HomeScreen() {
   const customerServiceBackgroundImage = resolveImageSource(require('@/assets/images/f8a27c83-eb51-4e25-932e-e1787213c1a8.webp'));
   const spousesSighsBackgroundImage = resolveImageSource(require('@/assets/images/dd425792-1c11-465d-94a6-2bd8d928c196.webp'));
   const spousesHeartsBackgroundImage = resolveImageSource(require('@/assets/images/061906c1-46e2-4364-82f3-73e57037d6ae.webp'));
+  const datingBackgroundImage = resolveImageSource(require('@/assets/images/278203ca-b0a0-45bc-9a82-12a4e9b06403.webp'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
@@ -316,7 +317,8 @@ export default function HomeScreen() {
   const isCustomerServiceTheme = selectedTemplate?.name === 'Customer Service';
   const isSpousesSighsTheme = selectedTemplate?.name === 'Spouses Sighs';
   const isSpousesHeartsTheme = selectedTemplate?.name === 'Spouses Hearts';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : defaultBackgroundImage;
+  const isDatingTheme = selectedTemplate?.name === 'Dating';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
@@ -953,7 +955,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={spousesHeartsBackgroundImage} 
+        source={datingBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
