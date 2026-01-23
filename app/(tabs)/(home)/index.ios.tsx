@@ -851,14 +851,17 @@ export default function HomeScreen() {
               console.log('HomeScreen: Sending delete request to backend');
               const response = await fetch(`${BACKEND_URL}/templates/${templateId}`, {
                 method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
               });
 
               if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                  const errorData = await response.json();
+                  errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                  console.log('HomeScreen: Could not parse error response');
+                }
+                throw new Error(errorMessage);
               }
 
               console.log('HomeScreen: Template deleted successfully');
@@ -906,17 +909,20 @@ export default function HomeScreen() {
                 return;
               }
 
-              console.log('HomeScreen: Sending delete request to backend');
+              console.log('HomeScreen: Sending delete request to backend for game', gameId);
               const response = await fetch(`${BACKEND_URL}/games/${gameId}`, {
                 method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
               });
 
               if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                  const errorData = await response.json();
+                  errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                  console.log('HomeScreen: Could not parse error response');
+                }
+                throw new Error(errorMessage);
               }
 
               console.log('HomeScreen: Active game deleted successfully');
