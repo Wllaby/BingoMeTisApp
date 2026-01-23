@@ -303,7 +303,7 @@ export default function HomeScreen() {
   const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
-  const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
+  const kidsBackgroundImage = resolveImageSource(require('@/assets/images/97350fb6-a346-4936-b922-f17f9290a4b1.webp'));
   const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/7007edc2-3eba-483b-a36f-b7d6ed4e8a9a.jpeg'));
   const officeBackgroundImage = resolveImageSource(require('@/assets/images/dc9f2533-409a-47aa-a3fc-63b6e289409c.webp'));
   const customerServiceBackgroundImage = resolveImageSource(require('@/assets/images/f8a27c83-eb51-4e25-932e-e1787213c1a8.webp'));
@@ -949,7 +949,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={defaultBackgroundImage} 
+        source={kidsBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
