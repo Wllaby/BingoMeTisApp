@@ -2,7 +2,7 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#FF6B6B',      // Vibrant red for bingo balls
+  primary: '#20B2AA',      // Turquoise (changed from red)
   secondary: '#4ECDC4',    // Teal accent
   accent: '#FFE66D',       // Yellow highlight
   background: '#FFFFFF',   // Light background
@@ -12,7 +12,7 @@ export const colors = {
   card: '#FFFFFF',         // White cards
   cardBorder: '#E0E0E0',   // Light border
   marked: '#4ECDC4',       // Teal for marked cells
-  bingo: '#FF6B6B',        // Red for bingo win
+  bingo: '#20B2AA',        // Turquoise for bingo win (changed from red)
   highlight: '#FFE66D',    // Yellow highlight
   error: '#E74C3C',        // Red for errors
 };
