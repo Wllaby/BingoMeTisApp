@@ -570,7 +570,7 @@ export default function HomeScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          marked_cells: game.marked_cells,
+          markedCells: game.marked_cells,
           completed: true,
         }),
       });
@@ -656,9 +656,9 @@ export default function HomeScreen() {
     const bingoCount = countBingos(newMarkedCells);
     console.log('HomeScreen: Current bingo count:', bingoCount);
     
-    // Prepare update data
+    // Prepare update data - use camelCase for backend
     const updateData: any = {
-      marked_cells: newMarkedCells,
+      markedCells: newMarkedCells,
     };
     
     // Check for pit stops
@@ -723,13 +723,19 @@ export default function HomeScreen() {
     try {
       if (BACKEND_URL && currentGame.id) {
         console.log('HomeScreen: Saving game progress to backend');
-        await fetch(`${BACKEND_URL}/games/${currentGame.id}`, {
+        const saveResponse = await fetch(`${BACKEND_URL}/games/${currentGame.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(updateData),
         });
+        
+        if (!saveResponse.ok) {
+          console.error('HomeScreen: Failed to save game progress, status:', saveResponse.status);
+        } else {
+          console.log('HomeScreen: Game progress saved successfully');
+        }
       }
     } catch (error) {
       console.error('HomeScreen: Error saving game progress', error);
