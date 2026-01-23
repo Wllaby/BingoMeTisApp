@@ -308,13 +308,15 @@ export default function HomeScreen() {
   const officeBackgroundImage = resolveImageSource(require('@/assets/images/dc9f2533-409a-47aa-a3fc-63b6e289409c.webp'));
   const customerServiceBackgroundImage = resolveImageSource(require('@/assets/images/f8a27c83-eb51-4e25-932e-e1787213c1a8.webp'));
   const spousesSighsBackgroundImage = resolveImageSource(require('@/assets/images/dd425792-1c11-465d-94a6-2bd8d928c196.webp'));
+  const spousesHeartsBackgroundImage = resolveImageSource(require('@/assets/images/061906c1-46e2-4364-82f3-73e57037d6ae.webp'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
   const isOfficeTheme = selectedTemplate?.name === 'Office';
   const isCustomerServiceTheme = selectedTemplate?.name === 'Customer Service';
   const isSpousesSighsTheme = selectedTemplate?.name === 'Spouses Sighs';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : defaultBackgroundImage;
+  const isSpousesHeartsTheme = selectedTemplate?.name === 'Spouses Hearts';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
@@ -951,7 +953,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={spousesSighsBackgroundImage} 
+        source={spousesHeartsBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
