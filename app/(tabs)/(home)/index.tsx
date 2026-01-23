@@ -194,6 +194,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const confettiRef = useRef<any>(null);
   const [templates, setTemplates] = useState<BingoTemplate[]>([]);
+  const [activeGames, setActiveGames] = useState<BingoGame[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<BingoTemplate | null>(null);
   const [currentGame, setCurrentGame] = useState<BingoGame | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,12 +210,13 @@ export default function HomeScreen() {
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
   const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : defaultBackgroundImage;
 
-  // Reload templates when screen comes into focus
+  // Reload templates and active games when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('HomeScreen: Screen focused, reloading templates');
+      console.log('HomeScreen: Screen focused, reloading templates and active games');
       if (showTemplateList) {
         loadTemplates();
+        loadActiveGames();
       }
     }, [showTemplateList])
   );
@@ -265,6 +267,50 @@ export default function HomeScreen() {
       console.error('HomeScreen: Error loading templates', error);
       Alert.alert('Error', 'Failed to load templates. Please try again.');
       setLoading(false);
+    }
+  };
+
+  const loadActiveGames = async () => {
+    try {
+      console.log('HomeScreen: Fetching active games from API');
+      
+      if (!BACKEND_URL) {
+        console.error('HomeScreen: BACKEND_URL is not configured');
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/games/active`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('HomeScreen: Active games response:', data);
+      
+      const gamesArray = Array.isArray(data) ? data : (data.games || []);
+      console.log('HomeScreen: Active games loaded from API', gamesArray.length);
+      
+      const transformedGames: BingoGame[] = gamesArray.map((game: any) => ({
+        id: game.id,
+        template_id: game.templateId,
+        template_name: game.templateName,
+        marked_cells: game.markedCells || [],
+        completed: game.completed,
+        items: game.items,
+        started_at: game.startedAt,
+        bingo_count: game.bingoCount || 0,
+        target_bingo_count: 1,
+      }));
+      
+      setActiveGames(transformedGames);
+    } catch (error) {
+      console.error('HomeScreen: Error loading active games', error);
     }
   };
 
@@ -343,6 +389,22 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('HomeScreen: Error starting game', error);
       Alert.alert('Error', 'Failed to start game. Please try again.');
+    }
+  };
+
+  const resumeGame = (game: BingoGame) => {
+    console.log('HomeScreen: Resuming game', game.id, game.template_name);
+    
+    const template = templates.find(t => t.id === game.template_id);
+    if (template) {
+      setSelectedTemplate(template);
+    }
+    
+    setCurrentGame(game);
+    setShowTemplateList(false);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
@@ -707,6 +769,7 @@ export default function HomeScreen() {
   if (showTemplateList) {
     const customTemplates = templates.filter(t => t.is_custom);
     const hasCustomTemplates = customTemplates.length > 0;
+    const hasActiveGames = activeGames.length > 0;
     
     return (
       <ImageBackground 
@@ -724,6 +787,43 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
           </View>
+
+          {hasActiveGames && (
+            <React.Fragment>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Active games</Text>
+              </View>
+
+              {activeGames.map((game) => {
+                const gameKey = game.id;
+                const markedCount = game.marked_cells.length;
+                const totalCells = 25;
+                const progressText = `${markedCount}/${totalCells} marked`;
+                
+                return (
+                  <TouchableOpacity
+                    key={gameKey}
+                    style={styles.activeGameCard}
+                    onPress={() => resumeGame(game)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.activeGameContent}>
+                      <View style={styles.activeGameHeader}>
+                        <Text style={styles.activeGameName}>{game.template_name}</Text>
+                        <IconSymbol 
+                          ios_icon_name="chevron.right" 
+                          android_material_icon_name="chevron-right"
+                          size={20} 
+                          color={colors.primary} 
+                        />
+                      </View>
+                      <Text style={styles.activeGameProgress}>{progressText}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </React.Fragment>
+          )}
 
           {templates.filter(t => !t.is_custom).map((template) => {
             const templateKey = template.id;
@@ -1336,5 +1436,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginTop: 4,
+  },
+  activeGameCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  activeGameContent: {
+    width: '100%',
+  },
+  activeGameHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activeGameName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    flex: 1,
+  },
+  activeGameProgress: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
 });

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Bingo Bonanza",
-    "slug": "Bingo Bonanza",
+    "name": "Bingo MeTis",
+    "slug": "Bingo MeTis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -45,5 +45,5 @@
       "backendUrl": "https://yzkepwhqsdynm8w2kch3pff68s4jkujd.app.specular.dev"
     }
   },
-  "scheme": "Bingo Bonanza"
+  "scheme": "Bingo MeTis"
 }
