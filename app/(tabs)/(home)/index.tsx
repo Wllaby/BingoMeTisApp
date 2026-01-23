@@ -1230,13 +1230,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      <ImageBackground 
-        source={backgroundImage} 
-        style={styles.gameBackgroundContainer}
-        resizeMode="cover"
-      >
-        <View style={styles.gameBackgroundOverlay} />
-        
+      <View style={styles.gameBackgroundContainer}>
         <ConfettiCannon
           count={200}
           origin={{x: width / 2, y: 0}}
@@ -1392,7 +1386,7 @@ export default function HomeScreen() {
             </View>
           </View>
         </Modal>
-      </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -1450,10 +1444,7 @@ const styles = StyleSheet.create({
   },
   gameBackgroundContainer: {
     flex: 1,
-  },
-  gameBackgroundOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: '#1a1a1a',
   },
   gameContainer: {
     flex: 1,
