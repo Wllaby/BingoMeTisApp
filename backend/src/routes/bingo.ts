@@ -357,6 +357,35 @@ export function register(app: App, fastify: FastifyInstance) {
     }
   });
 
+  // GET /api/bingo/games/active - Get active games
+  fastify.get('/games/active', async (request, reply) => {
+    app.logger.info({}, 'Fetching active bingo games');
+
+    try {
+      const games = await app.db
+        .select({
+          id: schema.bingoGames.id,
+          templateId: schema.bingoGames.templateId,
+          templateName: schema.bingoGames.templateName,
+          markedCells: schema.bingoGames.markedCells,
+          completed: schema.bingoGames.completed,
+          items: schema.bingoGames.items,
+          startedAt: schema.bingoGames.startedAt,
+          bingoCount: schema.bingoGames.bingoCount,
+        })
+        .from(schema.bingoGames)
+        .where(eq(schema.bingoGames.completed, false))
+        .orderBy(desc(schema.bingoGames.startedAt))
+        .limit(5);
+
+      app.logger.info({ count: games.length }, 'Successfully fetched active bingo games');
+      return games;
+    } catch (error) {
+      app.logger.error({ err: error }, 'Failed to fetch active bingo games');
+      throw error;
+    }
+  });
+
   // GET /api/bingo/games/:id - Get specific game
   fastify.get('/games/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
