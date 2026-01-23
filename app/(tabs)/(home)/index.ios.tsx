@@ -311,6 +311,7 @@ export default function HomeScreen() {
   const spousesHeartsBackgroundImage = resolveImageSource(require('@/assets/images/061906c1-46e2-4364-82f3-73e57037d6ae.webp'));
   const datingBackgroundImage = resolveImageSource(require('@/assets/images/278203ca-b0a0-45bc-9a82-12a4e9b06403.webp'));
   const familyGatheringsBackgroundImage = resolveImageSource(require('@/assets/images/0a42377e-c3da-4554-b3eb-e990538d74b1.webp'));
+  const selfCareBackgroundImage = resolveImageSource(require('@/assets/images/d43faca0-bba5-4a76-8fed-12d40c226140.webp'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
@@ -320,7 +321,8 @@ export default function HomeScreen() {
   const isSpousesHeartsTheme = selectedTemplate?.name === 'Spouses Hearts';
   const isDatingTheme = selectedTemplate?.name === 'Dating';
   const isFamilyGatheringsTheme = selectedTemplate?.name === 'Family gatherings';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : isFamilyGatheringsTheme ? familyGatheringsBackgroundImage : defaultBackgroundImage;
+  const isSelfCareTheme = selectedTemplate?.name === 'Self-care';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : isFamilyGatheringsTheme ? familyGatheringsBackgroundImage : isSelfCareTheme ? selfCareBackgroundImage : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
@@ -957,7 +959,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={familyGatheringsBackgroundImage} 
+        source={selfCareBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
