@@ -37,7 +37,7 @@ export default function CreateThemeScreen() {
   const [currentOption, setCurrentOption] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const backgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  const backgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
 
   const addOption = () => {
     console.log('CreateThemeScreen: Adding option:', currentOption);

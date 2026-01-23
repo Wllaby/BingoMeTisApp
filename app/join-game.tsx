@@ -37,7 +37,7 @@ export default function JoinGameScreen() {
   const [gameCode, setGameCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const backgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  const backgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
 
   const handleJoinGame = async () => {
     console.log('JoinGameScreen: Join game tapped with code:', gameCode);
