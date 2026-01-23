@@ -1236,13 +1236,7 @@ export default function HomeScreen() {
         <Text style={styles.bannerSubtext}>{bannerSubtext}</Text>
       </View>
       
-      <ImageBackground 
-        source={backgroundImage} 
-        style={styles.backgroundSection}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay} />
-        
+      <View style={styles.gameBackgroundContainer}>
         <ConfettiCannon
           count={200}
           origin={{x: width / 2, y: 0}}
@@ -1393,7 +1387,7 @@ export default function HomeScreen() {
             </View>
           </View>
         </Modal>
-      </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -1448,6 +1442,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 100,
+  },
+  gameBackgroundContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
   },
   gameContainer: {
     flex: 1,
