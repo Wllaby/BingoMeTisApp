@@ -559,8 +559,10 @@ export default function HomeScreen() {
 
   const handleThemePress = (template: BingoTemplate) => {
     console.log('HomeScreen: Theme pressed', template.name);
-    setSelectedThemeForOptions(template);
-    setShowThemeOptionsModal(true);
+    console.log('HomeScreen: Opening theme options modal');
+    
+    // Directly create a new card instead of showing modal
+    createNewCard(template);
   };
 
   const resumeGame = (game: BingoGame) => {
@@ -1297,48 +1299,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </View>
-
-      <Modal
-        visible={showThemeOptionsModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowThemeOptionsModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{selectedThemeForOptions?.name}</Text>
-            <Text style={styles.modalMessage}>What would you like to do?</Text>
-            
-            <View style={styles.themeOptionsButtons}>
-              <TouchableOpacity
-                style={[styles.themeOptionButton, styles.themeOptionButtonPrimary]}
-                onPress={() => {
-                  if (selectedThemeForOptions) {
-                    createNewCard(selectedThemeForOptions);
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <IconSymbol 
-                  ios_icon_name="plus.circle.fill" 
-                  android_material_icon_name="add-circle"
-                  size={24} 
-                  color={colors.card} 
-                />
-                <Text style={styles.themeOptionButtonTextPrimary}>Create New Card</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowThemeOptionsModal(false)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       <Modal
         visible={showContinueModal}
