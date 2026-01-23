@@ -996,6 +996,12 @@ export default function HomeScreen() {
       >
         <View style={styles.overlay} />
         <Stack.Screen options={{ headerShown: false }} />
+        
+        {/* Top Banner */}
+        <View style={styles.topBanner}>
+          <Text style={styles.bannerText}>Bingo MeTis</Text>
+        </View>
+        
         <View style={styles.centerContainer}>
           <Text style={styles.loadingText}>{loadingText}</Text>
         </View>
@@ -1317,7 +1323,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   topBanner: {
-    backgroundColor: 'rgba(211, 211, 211, 0.95)',
+    backgroundColor: 'transparent',
     paddingVertical: 16,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 16,
@@ -1327,14 +1333,20 @@ const styles = StyleSheet.create({
   bannerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
   },
   bannerSubtext: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   centerContainer: {
     flex: 1,

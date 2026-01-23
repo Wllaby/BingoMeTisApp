@@ -1327,7 +1327,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   topBanner: {
-    backgroundColor: 'rgba(211, 211, 211, 0.95)',
+    backgroundColor: 'transparent',
     paddingVertical: 16,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 16,
@@ -1337,14 +1337,20 @@ const styles = StyleSheet.create({
   bannerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
   },
   bannerSubtext: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   backgroundSection: {
     flex: 1,
