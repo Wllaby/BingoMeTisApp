@@ -81,12 +81,21 @@ export function register(app: App, fastify: FastifyInstance) {
       if (!existingTemplate) {
         await app.db.insert(schema.bingoTemplates).values(template);
         app.logger.info({ templateName: template.name }, 'Seeded default bingo template');
-      } else if (existingTemplate.description !== template.description) {
-        // Update description if it changed
-        await app.db.update(schema.bingoTemplates)
-          .set({ description: template.description })
-          .where(eq(schema.bingoTemplates.name, template.name));
-        app.logger.info({ templateName: template.name }, 'Updated bingo template description');
+      } else {
+        // Check if description or items have changed
+        const itemsChanged = JSON.stringify(existingTemplate.items) !== JSON.stringify(template.items);
+        const descriptionChanged = existingTemplate.description !== template.description;
+
+        if (itemsChanged || descriptionChanged) {
+          // Update both description and items if either changed
+          await app.db.update(schema.bingoTemplates)
+            .set({
+              description: template.description,
+              items: template.items
+            })
+            .where(eq(schema.bingoTemplates.name, template.name));
+          app.logger.info({ templateName: template.name, itemsChanged, descriptionChanged }, 'Updated bingo template');
+        }
       }
     }
   });
