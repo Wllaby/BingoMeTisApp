@@ -309,7 +309,7 @@ export default function HomeScreen() {
   const [showThemeOptionsModal, setShowThemeOptionsModal] = useState(false);
   const [selectedThemeForOptions, setSelectedThemeForOptions] = useState<BingoTemplate | null>(null);
 
-  const defaultBackgroundImage = resolveImageSource(require('@/assets/images/736a52ec-5262-49f0-8717-ef943252fae5.jpeg'));
+  const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
   const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/7007edc2-3eba-483b-a36f-b7d6ed4e8a9a.jpeg'));
   
@@ -1003,7 +1003,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={thingsKidsDoBackgroundImage} 
+        source={defaultBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
