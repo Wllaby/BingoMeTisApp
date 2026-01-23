@@ -312,7 +312,7 @@ export default function HomeScreen() {
   const datingBackgroundImage = resolveImageSource(require('@/assets/images/278203ca-b0a0-45bc-9a82-12a4e9b06403.webp'));
   const familyGatheringsBackgroundImage = resolveImageSource(require('@/assets/images/0a42377e-c3da-4554-b3eb-e990538d74b1.webp'));
   const selfCareBackgroundImage = resolveImageSource(require('@/assets/images/d43faca0-bba5-4a76-8fed-12d40c226140.webp'));
-  const teenangstersBackgroundImage = resolveImageSource(require('@/assets/images/dc3b60af-4b20-46b5-b851-fe42f8e9e232.png'));
+  const teenangstersBackgroundImage = resolveImageSource(require('@/assets/images/defcdfaa-babd-4a93-9b92-4eda2ac624d6.webp'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
@@ -961,7 +961,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={selfCareBackgroundImage} 
+        source={teenangstersBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
