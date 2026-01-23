@@ -17,6 +17,32 @@ import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 
+// Get backenNow I understand the structure. I need to:
+
+1. Add a function to determine the bingo completion type based on `bingo_count` from the game data
+2. Update the profile pages to show "1 Bingo", "3 Bingo", or "Full Bingo" instead of the marked cells count and percentage
+
+Let me update both profile files:
+
+<write file="app/(tabs)/profile.tsx">
+import React, { useState, useEffect } from "react";
+import { 
+  SafeAreaView 
+} from "react-native-safe-area-context";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Platform,
+  TouchableOpacity,
+  Alert
+} from "react-native";
+import { Stack } from "expo-router";
+import Constants from "expo-constants";
+import { colors } from "@/styles/commonStyles";
+import { IconSymbol } from "@/components/IconSymbol";
+
 // Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
 
@@ -27,6 +53,7 @@ interface GameHistory {
   completed: boolean;
   completed_at?: string;
   created_at: string;
+  bingo_count?: number;
 }
 
 export default function HistoryScreen() {
@@ -73,6 +100,7 @@ export default function HistoryScreen() {
         completed: game.completed,
         completed_at: game.completedAt || game.completed_at,
         created_at: game.createdAt || game.created_at,
+        bingo_count: game.bingoCount || game.bingo_count,
       }));
       
       // Filter to only show completed games
@@ -97,6 +125,66 @@ export default function HistoryScreen() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getBingoCompletionText = (game: GameHistory) => {
+    const markedCount = game.marked_cells.length;
+    
+    // Full card (all 25 cells marked)
+    if (markedCount === 25) {
+      return 'Full Bingo';
+    }
+    
+    // Use bingo_count if available
+    if (game.bingo_count !== undefined && game.bingo_count !== null) {
+      if (game.bingo_count >= 3) {
+        return '3 Bingo';
+      } else if (game.bingo_count >= 1) {
+        return '1 Bingo';
+      }
+    }
+    
+    // Fallback: calculate bingos from marked_cells
+    const bingoCount = countBingos(game.marked_cells);
+    if (bingoCount >= 3) {
+      return '3 Bingo';
+    } else if (bingoCount >= 1) {
+      return '1 Bingo';
+    }
+    
+    return '1 Bingo';
+  };
+
+  const countBingos = (markedCells: number[]): number => {
+    let bingoCount = 0;
+    
+    // Check rows
+    for (let row = 0; row < 5; row++) {
+      const rowCells = [row * 5, row * 5 + 1, row * 5 + 2, row * 5 + 3, row * 5 + 4];
+      if (rowCells.every(cell => markedCells.includes(cell))) {
+        bingoCount++;
+      }
+    }
+    
+    // Check columns
+    for (let col = 0; col < 5; col++) {
+      const colCells = [col, col + 5, col + 10, col + 15, col + 20];
+      if (colCells.every(cell => markedCells.includes(cell))) {
+        bingoCount++;
+      }
+    }
+    
+    // Check diagonals
+    const diagonal1 = [0, 6, 12, 18, 24];
+    const diagonal2 = [4, 8, 12, 16, 20];
+    if (diagonal1.every(cell => markedCells.includes(cell))) {
+      bingoCount++;
+    }
+    if (diagonal2.every(cell => markedCells.includes(cell))) {
+      bingoCount++;
+    }
+    
+    return bingoCount;
   };
 
   return (
@@ -131,51 +219,48 @@ export default function HistoryScreen() {
           </View>
         ) : (
           <>
-            {games.map((game) => (
-              <TouchableOpacity
-                key={game.id}
-                style={styles.gameCard}
-                onPress={() => {
-                  console.log('HistoryScreen: Game card tapped', game.id);
-                  Alert.alert('Coming Soon', 'View game details will be available soon!');
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.gameCardHeader}>
-                  <View style={styles.gameCardTitle}>
-                    <Text style={styles.gameCardName}>{game.template_name}</Text>
-                    {game.completed && (
-                      <View style={styles.completedBadge}>
-                        <IconSymbol 
-                          ios_icon_name="checkmark.circle.fill" 
-                          android_material_icon_name="check-circle"
-                          size={16} 
-                          color={colors.card} 
-                        />
-                        <Text style={styles.completedText}>BINGO!</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.gameCardDate}>
-                    {formatDate(game.created_at)}
-                  </Text>
-                </View>
-                
-                <View style={styles.gameCardStats}>
-                  <View style={styles.stat}>
-                    <Text style={styles.statValue}>{game.marked_cells.length}</Text>
-                    <Text style={styles.statLabel}>Marked</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.stat}>
-                    <Text style={styles.statValue}>
-                      {Math.round((game.marked_cells.length / 25) * 100)}%
+            {games.map((game) => {
+              const completionText = getBingoCompletionText(game);
+              
+              return (
+                <TouchableOpacity
+                  key={game.id}
+                  style={styles.gameCard}
+                  onPress={() => {
+                    console.log('HistoryScreen: Game card tapped', game.id);
+                    Alert.alert('Coming Soon', 'View game details will be available soon!');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.gameCardHeader}>
+                    <View style={styles.gameCardTitle}>
+                      <Text style={styles.gameCardName}>{game.template_name}</Text>
+                      {game.completed && (
+                        <View style={styles.completedBadge}>
+                          <IconSymbol 
+                            ios_icon_name="checkmark.circle.fill" 
+                            android_material_icon_name="check-circle"
+                            size={16} 
+                            color={colors.card} 
+                          />
+                          <Text style={styles.completedText}>BINGO!</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.gameCardDate}>
+                      {formatDate(game.created_at)}
                     </Text>
-                    <Text style={styles.statLabel}>Complete</Text>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+                  
+                  <View style={styles.gameCardStats}>
+                    <View style={styles.stat}>
+                      <Text style={styles.statValue}>{completionText}</Text>
+                      <Text style={styles.statLabel}>Completion</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </>
         )}
       </ScrollView>
@@ -278,7 +363,7 @@ const styles = StyleSheet.create({
   gameCardStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
   },
   stat: {
     alignItems: 'center',
@@ -293,10 +378,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 4,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.cardBorder,
   },
 });
