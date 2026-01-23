@@ -925,14 +925,18 @@ export default function HomeScreen() {
                 throw new Error(errorMessage);
               }
 
-              console.log('HomeScreen: Active game deleted successfully');
+              console.log('HomeScreen: Active game deleted successfully from backend');
+              
+              // Immediately update the UI by removing the game from the list
+              setActiveGames(prevGames => {
+                const updatedGames = prevGames.filter(game => game.id !== gameId);
+                console.log('HomeScreen: Updated active games list, removed game', gameId);
+                return updatedGames;
+              });
               
               if (Platform.OS !== 'web') {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               }
-
-              // Reload active games to reflect the deletion
-              await loadActiveGames();
               
               Alert.alert('Success', 'Active game deleted successfully');
             } catch (error) {
