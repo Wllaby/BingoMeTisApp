@@ -989,17 +989,25 @@ export default function HomeScreen() {
   if (loading) {
     const loadingText = "Loading...";
     return (
-      <ImageBackground 
-        source={customThemeBackgroundImage} 
-        style={styles.container}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay} />
+      <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>{loadingText}</Text>
+        
+        {/* Top Banner */}
+        <View style={styles.topBanner}>
+          <Text style={styles.bannerText}>Bingo MeTis</Text>
         </View>
-      </ImageBackground>
+        
+        <ImageBackground 
+          source={customThemeBackgroundImage} 
+          style={styles.backgroundSection}
+          resizeMode="cover"
+        >
+          <View style={styles.overlay} />
+          <View style={styles.centerContainer}>
+            <Text style={styles.loadingText}>{loadingText}</Text>
+          </View>
+        </ImageBackground>
+      </View>
     );
   }
 
@@ -1010,12 +1018,7 @@ export default function HomeScreen() {
     const bannerText = 'Bingo MeTis';
     
     return (
-      <ImageBackground 
-        source={defaultBackgroundImage} 
-        style={styles.container}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay} />
+      <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         
         {/* Top Banner */}
@@ -1023,113 +1026,120 @@ export default function HomeScreen() {
           <Text style={styles.bannerText}>{bannerText}</Text>
         </View>
         
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <ImageBackground 
+          source={defaultBackgroundImage} 
+          style={styles.backgroundSection}
+          resizeMode="cover"
         >
-          <View style={styles.header}>
-            <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
-          </View>
+          <View style={styles.overlay} />
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
+            </View>
 
-          {templates.filter(t => !t.is_custom).map((template) => {
-            const templateKey = template.id;
-            return (
-              <TouchableOpacity
-                key={templateKey}
-                style={styles.templateCard}
-                onPress={() => handleThemePress(template)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.templateContent}>
-                  <View style={styles.templateHeader}>
-                    <Text style={styles.templateName}>{template.name}</Text>
+            {templates.filter(t => !t.is_custom).map((template) => {
+              const templateKey = template.id;
+              return (
+                <TouchableOpacity
+                  key={templateKey}
+                  style={styles.templateCard}
+                  onPress={() => handleThemePress(template)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.templateContent}>
+                    <View style={styles.templateHeader}>
+                      <Text style={styles.templateName}>{template.name}</Text>
+                    </View>
+                    {template.description && (
+                      <Text style={styles.templateDescription}>{template.description}</Text>
+                    )}
                   </View>
-                  {template.description && (
-                    <Text style={styles.templateDescription}>{template.description}</Text>
-                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+            {hasCustomTemplates && (
+              <React.Fragment>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Custom themes and games</Text>
                 </View>
-              </TouchableOpacity>
-            );
-          })}
 
-          {hasCustomTemplates && (
-            <React.Fragment>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Custom themes and games</Text>
-              </View>
+                {customTemplates.map((template) => {
+                  const templateKey = template.id;
+                  return (
+                    <SwipeableCustomTheme
+                      key={templateKey}
+                      template={template}
+                      onPress={() => handleThemePress(template)}
+                      onDelete={() => deleteCustomTemplate(template.id, template.name)}
+                      onCopyCode={() => copyShareCode(template.id, template.name)}
+                    />
+                  );
+                })}
+              </React.Fragment>
+            )}
 
-              {customTemplates.map((template) => {
-                const templateKey = template.id;
-                return (
-                  <SwipeableCustomTheme
-                    key={templateKey}
-                    template={template}
-                    onPress={() => handleThemePress(template)}
-                    onDelete={() => deleteCustomTemplate(template.id, template.name)}
-                    onCopyCode={() => copyShareCode(template.id, template.name)}
-                  />
-                );
-              })}
-            </React.Fragment>
-          )}
+            {hasActiveGames && (
+              <React.Fragment>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Active games</Text>
+                </View>
 
-          {hasActiveGames && (
-            <React.Fragment>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Active games</Text>
-              </View>
+                {activeGames.map((game) => {
+                  const gameKey = game.id;
+                  
+                  return (
+                    <SwipeableActiveGame
+                      key={gameKey}
+                      game={game}
+                      onPress={() => resumeGame(game)}
+                      onDelete={() => deleteActiveGame(game.id, game.template_name)}
+                    />
+                  );
+                })}
+              </React.Fragment>
+            )}
 
-              {activeGames.map((game) => {
-                const gameKey = game.id;
-                
-                return (
-                  <SwipeableActiveGame
-                    key={gameKey}
-                    game={game}
-                    onPress={() => resumeGame(game)}
-                    onDelete={() => deleteActiveGame(game.id, game.template_name)}
-                  />
-                );
-              })}
-            </React.Fragment>
-          )}
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => {
+                console.log('HomeScreen: Create your own theme tapped');
+                router.push('/create-theme');
+              }}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="plus.circle.fill" 
+                android_material_icon_name="add-circle"
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.createButtonText}>Create your own theme</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={() => {
-              console.log('HomeScreen: Create your own theme tapped');
-              router.push('/create-theme');
-            }}
-            activeOpacity={0.7}
-          >
-            <IconSymbol 
-              ios_icon_name="plus.circle.fill" 
-              android_material_icon_name="add-circle"
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.createButtonText}>Create your own theme</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.joinButton}
-            onPress={() => {
-              console.log('HomeScreen: Add/Join a game with a code tapped');
-              router.push('/join-game');
-            }}
-            activeOpacity={0.7}
-          >
-            <IconSymbol 
-              ios_icon_name="link.circle.fill" 
-              android_material_icon_name="link"
-              size={24} 
-              color={colors.primary} 
-            />
-            <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </ImageBackground>
+            <TouchableOpacity
+              style={styles.joinButton}
+              onPress={() => {
+                console.log('HomeScreen: Add/Join a game with a code tapped');
+                router.push('/join-game');
+              }}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="link.circle.fill" 
+                android_material_icon_name="link"
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </ImageBackground>
+      </View>
     );
   }
 
@@ -1151,12 +1161,7 @@ export default function HomeScreen() {
   const bannerSubtext = targetText;
   
   return (
-    <ImageBackground 
-      source={backgroundImage} 
-      style={styles.container}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay} />
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* Top Banner */}
@@ -1165,156 +1170,161 @@ export default function HomeScreen() {
         <Text style={styles.bannerSubtext}>{bannerSubtext}</Text>
       </View>
       
-      <ConfettiCannon
-        count={200}
-        origin={{x: width / 2, y: 0}}
-        autoStart={false}
-        ref={confettiRef}
-        fadeOut={true}
-      />
-      
-      <View style={styles.gameContainer}>
-        <View style={styles.gameHeader}>
-          <TouchableOpacity onPress={resetGame} style={styles.backButton}>
-            <IconSymbol 
-              ios_icon_name="chevron.left" 
-              android_material_icon_name="arrow-back"
-              size={24} 
-              color={colors.text} 
-            />
-          </TouchableOpacity>
-          <View style={styles.gameHeaderSpacer} />
-          <TouchableOpacity 
-            onPress={() => {
-              console.log('HomeScreen: Share button tapped');
-              Alert.alert('Coming Soon', 'Share functionality will be available soon!');
-            }}
-            style={styles.shareButton}
-          >
-            <IconSymbol 
-              ios_icon_name="square.and.arrow.up" 
-              android_material_icon_name="share"
-              size={24} 
-              color={colors.text} 
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.cardCenterContainer}>
-          <View style={styles.bingoGrid}>
-            {currentGame?.items?.slice(0, 25).map((item, index) => {
-              const isMarked = currentGame.marked_cells.includes(index);
-              const isFreeSpace = index === 12;
-              const cellKey = index;
-              
-              return (
-                <TouchableOpacity
-                  key={cellKey}
-                  style={[
-                    styles.bingoCell,
-                    isMarked && styles.bingoCellMarked,
-                    isFreeSpace && styles.bingoCellFree
-                  ]}
-                  onPress={() => toggleCell(index)}
-                  activeOpacity={0.7}
-                >
-                  {isFreeSpace ? (
-                    <View style={styles.freeSpaceContent}>
-                      <Text style={styles.freeSpaceText}>FREE</Text>
-                    </View>
-                  ) : (
-                    <Text 
-                      style={[
-                        styles.cellText,
-                        isMarked && styles.cellTextMarked
-                      ]}
-                      numberOfLines={3}
-                      adjustsFontSizeToFit
-                    >
-                      {item}
-                    </Text>
-                  )}
-                  {isMarked && !isFreeSpace && (
-                    <View style={styles.checkMark}>
-                      <IconSymbol 
-                        ios_icon_name="checkmark.circle.fill" 
-                        android_material_icon_name="check-circle"
-                        size={24} 
-                        color={colors.card} 
-                      />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.newGameButton}
-            onPress={() => {
-              console.log('HomeScreen: Create new card button tapped - generating new random card');
-              if (selectedTemplate) {
-                createNewCard(selectedTemplate);
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <IconSymbol 
-              ios_icon_name="arrow.clockwise" 
-              android_material_icon_name="refresh"
-              size={20} 
-              color={colors.card} 
-            />
-            <Text style={styles.newGameButtonText}>Create a New Card</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <Modal
-        visible={showContinueModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowContinueModal(false)}
+      <ImageBackground 
+        source={backgroundImage} 
+        style={styles.backgroundSection}
+        resizeMode="cover"
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{continueModalTitle}</Text>
-            <Text style={styles.modalMessage}>{continueModalMessage}</Text>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
-                onPress={() => handleContinueResponse(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.modalButtonTextSecondary}>No, Save Game</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
-                onPress={() => handleContinueResponse(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.modalButtonTextPrimary}>Yes, Continue!</Text>
-              </TouchableOpacity>
+        <View style={styles.overlay} />
+        
+        <ConfettiCannon
+          count={200}
+          origin={{x: width / 2, y: 0}}
+          autoStart={false}
+          ref={confettiRef}
+          fadeOut={true}
+        />
+        
+        <View style={styles.gameContainer}>
+          <View style={styles.gameHeader}>
+            <TouchableOpacity onPress={resetGame} style={styles.backButton}>
+              <IconSymbol 
+                ios_icon_name="chevron.left" 
+                android_material_icon_name="arrow-back"
+                size={24} 
+                color={colors.text} 
+              />
+            </TouchableOpacity>
+            <View style={styles.gameHeaderSpacer} />
+            <TouchableOpacity 
+              onPress={() => {
+                console.log('HomeScreen: Share button tapped');
+                Alert.alert('Coming Soon', 'Share functionality will be available soon!');
+              }}
+              style={styles.shareButton}
+            >
+              <IconSymbol 
+                ios_icon_name="square.and.arrow.up" 
+                android_material_icon_name="share"
+                size={24} 
+                color={colors.text} 
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.cardCenterContainer}>
+            <View style={styles.bingoGrid}>
+              {currentGame?.items?.slice(0, 25).map((item, index) => {
+                const isMarked = currentGame.marked_cells.includes(index);
+                const isFreeSpace = index === 12;
+                const cellKey = index;
+                
+                return (
+                  <TouchableOpacity
+                    key={cellKey}
+                    style={[
+                      styles.bingoCell,
+                      isMarked && styles.bingoCellMarked,
+                      isFreeSpace && styles.bingoCellFree
+                    ]}
+                    onPress={() => toggleCell(index)}
+                    activeOpacity={0.7}
+                  >
+                    {isFreeSpace ? (
+                      <View style={styles.freeSpaceContent}>
+                        <Text style={styles.freeSpaceText}>FREE</Text>
+                      </View>
+                    ) : (
+                      <Text 
+                        style={[
+                          styles.cellText,
+                          isMarked && styles.cellTextMarked
+                        ]}
+                        numberOfLines={3}
+                        adjustsFontSizeToFit
+                      >
+                        {item}
+                      </Text>
+                    )}
+                    {isMarked && !isFreeSpace && (
+                      <View style={styles.checkMark}>
+                        <IconSymbol 
+                          ios_icon_name="checkmark.circle.fill" 
+                          android_material_icon_name="check-circle"
+                          size={24} 
+                          color={colors.card} 
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.newGameButton}
+              onPress={() => {
+                console.log('HomeScreen: Create new card button tapped - generating new random card');
+                if (selectedTemplate) {
+                  createNewCard(selectedTemplate);
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="arrow.clockwise" 
+                android_material_icon_name="refresh"
+                size={20} 
+                color={colors.card} 
+              />
+              <Text style={styles.newGameButtonText}>Create a New Card</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </Modal>
-    </ImageBackground>
+
+        <Modal
+          visible={showContinueModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowContinueModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>{continueModalTitle}</Text>
+              <Text style={styles.modalMessage}>{continueModalMessage}</Text>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSecondary]}
+                  onPress={() => handleContinueResponse(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonTextSecondary}>No, Save Game</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary]}
+                  onPress={() => handleContinueResponse(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonTextPrimary}>Yes, Continue!</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
     paddingTop: Platform.OS === 'android' ? 48 : 0,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   topBanner: {
     backgroundColor: 'rgba(211, 211, 211, 0.95)',
@@ -1335,6 +1345,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 4,
+  },
+  backgroundSection: {
+    flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   centerContainer: {
     flex: 1,
