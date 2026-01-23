@@ -15,12 +15,6 @@ export function register(app: App, fastify: FastifyInstance) {
         isCustom: false,
       },
       {
-        name: "Adulting",
-        description: "Life skills, small wins, and tiny disasters",
-        items: ["Robin", "Blue Jay", "Cardinal", "Sparrow", "Crow", "Eagle", "Hawk", "Owl", "Woodpecker", "Hummingbird", "Pigeon", "Seagull", "Pelican", "Flamingo", "Penguin", "Parrot", "Toucan", "Peacock", "Swan", "Duck", "Goose", "Turkey", "Chicken", "Ostrich", "Emu"],
-        isCustom: false,
-      },
-      {
         name: "Customer Service",
         description: "Yes… we have answers. No… you won't like them",
         items: ["Can I speak to a manager?", "I want a refund", "This is unacceptable", "I've been waiting forever", "Your website is broken", "I didn't receive my order", "The product is defective", "I was promised...", "I'll take my business elsewhere", "I'm a loyal customer", "This is ridiculous", "I demand compensation", "I'll leave a bad review", "I know the owner", "I'm never shopping here again", "Can you make an exception?", "I need this today", "Why is this so expensive?", "I saw it cheaper elsewhere", "The ad said...", "I lost my receipt", "Can you price match?", "I changed my mind", "This doesn't fit", "I want to speak to corporate"],
@@ -71,7 +65,7 @@ export function register(app: App, fastify: FastifyInstance) {
     ];
 
     // Delete old templates that are no longer in the default set
-    const oldTemplateNames = ["Office Jargon", "Birds", "Things kids do"];
+    const oldTemplateNames = ["Office Jargon", "Birds", "Things kids do", "Adulting"];
     for (const oldName of oldTemplateNames) {
       await app.db.delete(schema.bingoTemplates).where(eq(schema.bingoTemplates.name, oldName));
       app.logger.info({ templateName: oldName }, 'Deleted old bingo template');
