@@ -1436,7 +1436,7 @@ const styles = StyleSheet.create({
   },
   gameBackgroundContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#FFFFFF',
   },
   gameContainer: {
     flex: 1,
