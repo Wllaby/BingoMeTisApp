@@ -306,11 +306,13 @@ export default function HomeScreen() {
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
   const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/7007edc2-3eba-483b-a36f-b7d6ed4e8a9a.jpeg'));
   const officeBackgroundImage = resolveImageSource(require('@/assets/images/dc9f2533-409a-47aa-a3fc-63b6e289409c.webp'));
+  const customerServiceBackgroundImage = resolveImageSource(require('@/assets/images/dd29ebea-bdaf-4afa-80af-ed6e7f230267.png'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
   const isOfficeTheme = selectedTemplate?.name === 'Office';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : defaultBackgroundImage;
+  const isCustomerServiceTheme = selectedTemplate?.name === 'Customer Service';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
