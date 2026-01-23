@@ -310,6 +310,7 @@ export default function HomeScreen() {
   const spousesSighsBackgroundImage = resolveImageSource(require('@/assets/images/dd425792-1c11-465d-94a6-2bd8d928c196.webp'));
   const spousesHeartsBackgroundImage = resolveImageSource(require('@/assets/images/061906c1-46e2-4364-82f3-73e57037d6ae.webp'));
   const datingBackgroundImage = resolveImageSource(require('@/assets/images/278203ca-b0a0-45bc-9a82-12a4e9b06403.webp'));
+  const familyGatheringsBackgroundImage = resolveImageSource(require('@/assets/images/0a42377e-c3da-4554-b3eb-e990538d74b1.webp'));
   
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
@@ -318,7 +319,8 @@ export default function HomeScreen() {
   const isSpousesSighsTheme = selectedTemplate?.name === 'Spouses Sighs';
   const isSpousesHeartsTheme = selectedTemplate?.name === 'Spouses Hearts';
   const isDatingTheme = selectedTemplate?.name === 'Dating';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : defaultBackgroundImage;
+  const isFamilyGatheringsTheme = selectedTemplate?.name === 'Family gatherings';
+  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : isFamilyGatheringsTheme ? familyGatheringsBackgroundImage : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
@@ -955,7 +957,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={datingBackgroundImage} 
+        source={familyGatheringsBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
