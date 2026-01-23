@@ -296,6 +296,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const confettiRef = useRef<any>(null);
   const bingoCardRef = useRef<View>(null);
+  const shareableCardRef = useRef<View>(null);
   const [templates, setTemplates] = useState<BingoTemplate[]>([]);
   const [activeGames, setActiveGames] = useState<BingoGame[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<BingoTemplate | null>(null);
@@ -318,6 +319,9 @@ export default function HomeScreen() {
   const familyGatheringsBackgroundImage = resolveImageSource(require('@/assets/images/0a42377e-c3da-4554-b3eb-e990538d74b1.webp'));
   const selfCareBackgroundImage = resolveImageSource(require('@/assets/images/d43faca0-bba5-4a76-8fed-12d40c226140.webp'));
   const teenangstersBackgroundImage = resolveImageSource(require('@/assets/images/defcdfaa-babd-4a93-9b92-4eda2ac624d6.webp'));
+  
+  // Fixed background image for sharing
+  const shareBackgroundImage = resolveImageSource(require('@/assets/images/4444f386-e9bd-4350-ad73-914cee2f2d3e.webp'));
   
   const isCustomTheme = selectedTemplate?.is_custom === true;
   const isKidsTheme = selectedTemplate?.name === 'Kids';
@@ -991,10 +995,10 @@ export default function HomeScreen() {
   };
 
   const handleShareBingoCard = async () => {
-    console.log('HomeScreen: Share button tapped - capturing bingo card screenshot');
+    console.log('HomeScreen: Share button tapped - capturing bingo card with branded background');
     
-    if (!bingoCardRef.current || !currentGame) {
-      console.error('HomeScreen: Bingo card ref or current game not available');
+    if (!shareableCardRef.current || !currentGame) {
+      console.error('HomeScreen: Shareable card ref or current game not available');
       Alert.alert('Error', 'Unable to share at this moment. Please try again.');
       return;
     }
@@ -1006,8 +1010,8 @@ export default function HomeScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
 
-      console.log('HomeScreen: Capturing screenshot of bingo card');
-      const uri = await captureRef(bingoCardRef, {
+      console.log('HomeScreen: Capturing screenshot of bingo card with branded background');
+      const uri = await captureRef(shareableCardRef, {
         format: 'png',
         quality: 1,
       });
@@ -1345,6 +1349,65 @@ export default function HomeScreen() {
               />
               <Text style={styles.newGameButtonText}>Create a New Card</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Hidden shareable card with branded background - positioned off-screen */}
+        <View style={styles.hiddenShareableCard}>
+          <View ref={shareableCardRef} collapsable={false} style={styles.shareableCardContainer}>
+            <ImageBackground 
+              source={shareBackgroundImage} 
+              style={styles.shareableBackground}
+              resizeMode="cover"
+            >
+              <View style={styles.shareableContent}>
+                <View style={styles.bingoGrid}>
+                  {currentGame?.items?.slice(0, 25).map((item, index) => {
+                    const isMarked = currentGame.marked_cells.includes(index);
+                    const isFreeSpace = index === 12;
+                    const cellKey = `share-${index}`;
+                    
+                    return (
+                      <View
+                        key={cellKey}
+                        style={[
+                          styles.bingoCell,
+                          isMarked && styles.bingoCellMarked,
+                          isFreeSpace && styles.bingoCellFree
+                        ]}
+                      >
+                        {isFreeSpace ? (
+                          <View style={styles.freeSpaceContent}>
+                            <Text style={styles.freeSpaceText}>FREE</Text>
+                          </View>
+                        ) : (
+                          <Text 
+                            style={[
+                              styles.cellText,
+                              isMarked && styles.cellTextMarked
+                            ]}
+                            numberOfLines={3}
+                            adjustsFontSizeToFit
+                          >
+                            {item}
+                          </Text>
+                        )}
+                        {isMarked && !isFreeSpace && (
+                          <View style={styles.checkMark}>
+                            <IconSymbol 
+                              ios_icon_name="checkmark.circle.fill" 
+                              android_material_icon_name="check-circle"
+                              size={24} 
+                              color={colors.card} 
+                            />
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            </ImageBackground>
           </View>
         </View>
 
@@ -1803,5 +1866,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '600',
+  },
+  hiddenShareableCard: {
+    position: 'absolute',
+    left: -10000,
+    top: -10000,
+    width: width - 40,
+    maxWidth: 500,
+  },
+  shareableCardContainer: {
+    width: width - 40,
+    maxWidth: 500,
+    aspectRatio: 1,
+  },
+  shareableBackground: {
+    width: '100%',
+    height: '100%',
+  },
+  shareableContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
