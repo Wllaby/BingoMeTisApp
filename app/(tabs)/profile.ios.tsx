@@ -30,23 +30,23 @@ interface GameHistory {
 }
 
 export default function HistoryScreen() {
-  console.log('HistoryScreen (iOS): Component mounted');
+  console.log('HistoryScreen: Component mounted');
   
   const [games, setGames] = useState<GameHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('HistoryScreen (iOS): Loading game history');
+    console.log('HistoryScreen: Loading game history');
     loadGameHistory();
   }, []);
 
   const loadGameHistory = async () => {
     try {
-      console.log('HistoryScreen (iOS): Fetching game history from API');
-      console.log('HistoryScreen (iOS): Backend URL:', BACKEND_URL);
+      console.log('HistoryScreen: Fetching game history from API');
+      console.log('HistoryScreen: Backend URL:', BACKEND_URL);
       
       if (!BACKEND_URL) {
-        console.error('HistoryScreen (iOS): BACKEND_URL is not configured');
+        console.error('HistoryScreen: BACKEND_URL is not configured');
         setLoading(false);
         return;
       }
@@ -63,7 +63,7 @@ export default function HistoryScreen() {
       }
 
       const data = await response.json();
-      console.log('HistoryScreen (iOS): Game history loaded from API', data.length);
+      console.log('HistoryScreen: Game history loaded from API', data.length);
       
       // Transform backend data to match frontend interface
       const transformedGames: GameHistory[] = data.map((game: any) => ({
@@ -78,12 +78,12 @@ export default function HistoryScreen() {
       
       // Filter to only show completed games
       const completedGames = transformedGames.filter(game => game.completed);
-      console.log('HistoryScreen (iOS): Completed games:', completedGames.length);
+      console.log('HistoryScreen: Completed games:', completedGames.length);
       
       setGames(completedGames);
       setLoading(false);
     } catch (error) {
-      console.error('HistoryScreen (iOS): Error loading game history', error);
+      console.error('HistoryScreen: Error loading game history', error);
       Alert.alert('Error', 'Failed to load game history. Please try again.');
       setLoading(false);
     }
@@ -200,7 +200,7 @@ export default function HistoryScreen() {
                   key={game.id}
                   style={styles.gameCard}
                   onPress={() => {
-                    console.log('HistoryScreen (iOS): Game card tapped', game.id);
+                    console.log('HistoryScreen: Game card tapped', game.id);
                     Alert.alert('Coming Soon', 'View game details will be available soon!');
                   }}
                   activeOpacity={0.7}

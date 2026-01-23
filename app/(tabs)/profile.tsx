@@ -17,32 +17,6 @@ import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 
-// Get backenNow I understand the structure. I need to:
-
-1. Add a function to determine the bingo completion type based on `bingo_count` from the game data
-2. Update the profile pages to show "1 Bingo", "3 Bingo", or "Full Bingo" instead of the marked cells count and percentage
-
-Let me update both profile files:
-
-<write file="app/(tabs)/profile.tsx">
-import React, { useState, useEffect } from "react";
-import { 
-  SafeAreaView 
-} from "react-native-safe-area-context";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Platform,
-  TouchableOpacity,
-  Alert
-} from "react-native";
-import { Stack } from "expo-router";
-import Constants from "expo-constants";
-import { colors } from "@/styles/commonStyles";
-import { IconSymbol } from "@/components/IconSymbol";
-
 // Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
 
