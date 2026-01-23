@@ -1227,173 +1227,223 @@ export default function HomeScreen() {
   const bannerSubtext = targetText;
   
   return (
-    <View style={styles.container}>
+    <ImageBackground 
+      source={backgroundImage} 
+      style={styles.gameBackgroundContainer}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay} />
       <Stack.Screen options={{ headerShown: false }} />
       
-      <ImageBackground 
-        source={backgroundImage} 
-        style={styles.gameBackgroundContainer}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay} />
-        
-        <ConfettiCannon
-          count={200}
-          origin={{x: width / 2, y: 0}}
-          autoStart={false}
-          ref={confettiRef}
-          fadeOut={true}
-        />
-        
-        <View style={styles.gameContainer}>
-          <View style={styles.gameHeader}>
-            <TouchableOpacity onPress={resetGame} style={styles.backButton}>
-              <IconSymbol 
-                ios_icon_name="chevron.left" 
-                android_material_icon_name="arrow-back"
-                size={24} 
-                color={colors.text} 
-              />
-            </TouchableOpacity>
-            <View style={styles.gameHeaderSpacer} />
-            <TouchableOpacity 
-              onPress={handleShareBingoCard}
-              style={[styles.shareButton, isSharing && styles.shareButtonDisabled]}
-              disabled={isSharing}
-            >
-              <IconSymbol 
-                ios_icon_name="square.and.arrow.up" 
-                android_material_icon_name="share"
-                size={24} 
-                color={isSharing ? colors.textSecondary : colors.text} 
-              />
-            </TouchableOpacity>
-          </View>
+      <ConfettiCannon
+        count={200}
+        origin={{x: width / 2, y: 0}}
+        autoStart={false}
+        ref={confettiRef}
+        fadeOut={true}
+      />
+      
+      <View style={styles.gameContainer}>
+        <View style={styles.gameHeader}>
+          <TouchableOpacity onPress={resetGame} style={styles.backButton}>
+            <IconSymbol 
+              ios_icon_name="chevron.left" 
+              android_material_icon_name="arrow-back"
+              size={24} 
+              color={colors.text} 
+            />
+          </TouchableOpacity>
+          <View style={styles.gameHeaderSpacer} />
+          <TouchableOpacity 
+            onPress={handleShareBingoCard}
+            style={[styles.shareButton, isSharing && styles.shareButtonDisabled]}
+            disabled={isSharing}
+          >
+            <IconSymbol 
+              ios_icon_name="square.and.arrow.up" 
+              android_material_icon_name="share"
+              size={24} 
+              color={isSharing ? colors.textSecondary : colors.text} 
+            />
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.cardCenterContainer}>
-            <View 
-              style={styles.shareableCard}
-              ref={bingoCardRef}
-              collapsable={false}
-            >
-              <ImageBackground 
-                source={backgroundImage} 
-                style={styles.shareableBackground}
-                resizeMode="cover"
-              >
-                <View style={styles.shareableOverlay} />
+        <View style={styles.cardCenterContainer}>
+          <View style={styles.bingoCardContainer}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{bannerText}</Text>
+              <Text style={styles.cardSubtitle}>{bannerSubtext}</Text>
+            </View>
+
+            <View style={styles.bingoGrid}>
+              {currentGame?.items?.slice(0, 25).map((item, index) => {
+                const isMarked = currentGame.marked_cells.includes(index);
+                const isFreeSpace = index === 12;
+                const cellKey = index;
                 
-                <View style={styles.shareableHeader}>
-                  <Text style={styles.shareableTitle}>{bannerText}</Text>
-                  <Text style={styles.shareableSubtitle}>{bannerSubtext}</Text>
-                </View>
-
-                <View style={styles.bingoGrid}>
-                  {currentGame?.items?.slice(0, 25).map((item, index) => {
-                    const isMarked = currentGame.marked_cells.includes(index);
-                    const isFreeSpace = index === 12;
-                    const cellKey = index;
-                    
-                    return (
-                      <TouchableOpacity
-                        key={cellKey}
+                return (
+                  <TouchableOpacity
+                    key={cellKey}
+                    style={[
+                      styles.bingoCell,
+                      isMarked && styles.bingoCellMarked,
+                      isFreeSpace && styles.bingoCellFree
+                    ]}
+                    onPress={() => toggleCell(index)}
+                    activeOpacity={0.7}
+                  >
+                    {isFreeSpace ? (
+                      <View style={styles.freeSpaceContent}>
+                        <Text style={styles.freeSpaceText}>FREE</Text>
+                      </View>
+                    ) : (
+                      <Text 
                         style={[
-                          styles.bingoCell,
-                          isMarked && styles.bingoCellMarked,
-                          isFreeSpace && styles.bingoCellFree
+                          styles.cellText,
+                          isMarked && styles.cellTextMarked
                         ]}
-                        onPress={() => toggleCell(index)}
-                        activeOpacity={0.7}
+                        numberOfLines={3}
+                        adjustsFontSizeToFit
                       >
-                        {isFreeSpace ? (
-                          <View style={styles.freeSpaceContent}>
-                            <Text style={styles.freeSpaceText}>FREE</Text>
-                          </View>
-                        ) : (
-                          <Text 
-                            style={[
-                              styles.cellText,
-                              isMarked && styles.cellTextMarked
-                            ]}
-                            numberOfLines={3}
-                            adjustsFontSizeToFit
-                          >
-                            {item}
-                          </Text>
-                        )}
-                        {isMarked && !isFreeSpace && (
-                          <View style={styles.checkMark}>
-                            <IconSymbol 
-                              ios_icon_name="checkmark.circle.fill" 
-                              android_material_icon_name="check-circle"
-                              size={24} 
-                              color={colors.card} 
-                            />
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </ImageBackground>
+                        {item}
+                      </Text>
+                    )}
+                    {isMarked && !isFreeSpace && (
+                      <View style={styles.checkMark}>
+                        <IconSymbol 
+                          ios_icon_name="checkmark.circle.fill" 
+                          android_material_icon_name="check-circle"
+                          size={24} 
+                          color={colors.card} 
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.newGameButton}
-              onPress={() => {
-                console.log('HomeScreen: Create new card button tapped - generating new random card');
-                if (selectedTemplate) {
-                  createNewCard(selectedTemplate);
-                }
-              }}
-              activeOpacity={0.7}
+          <View 
+            style={styles.hiddenShareableCard}
+            ref={bingoCardRef}
+            collapsable={false}
+          >
+            <ImageBackground 
+              source={backgroundImage} 
+              style={styles.shareableBackground}
+              resizeMode="cover"
             >
-              <IconSymbol 
-                ios_icon_name="arrow.clockwise" 
-                android_material_icon_name="refresh"
-                size={20} 
-                color={colors.card} 
-              />
-              <Text style={styles.newGameButtonText}>Create a New Card</Text>
-            </TouchableOpacity>
+              <View style={styles.shareableOverlay} />
+              
+              <View style={styles.shareableHeader}>
+                <Text style={styles.shareableTitle}>{bannerText}</Text>
+                <Text style={styles.shareableSubtitle}>{bannerSubtext}</Text>
+              </View>
+
+              <View style={styles.bingoGrid}>
+                {currentGame?.items?.slice(0, 25).map((item, index) => {
+                  const isMarked = currentGame.marked_cells.includes(index);
+                  const isFreeSpace = index === 12;
+                  const cellKey = `share-${index}`;
+                  
+                  return (
+                    <View
+                      key={cellKey}
+                      style={[
+                        styles.bingoCell,
+                        isMarked && styles.bingoCellMarked,
+                        isFreeSpace && styles.bingoCellFree
+                      ]}
+                    >
+                      {isFreeSpace ? (
+                        <View style={styles.freeSpaceContent}>
+                          <Text style={styles.freeSpaceText}>FREE</Text>
+                        </View>
+                      ) : (
+                        <Text 
+                          style={[
+                            styles.cellText,
+                            isMarked && styles.cellTextMarked
+                          ]}
+                          numberOfLines={3}
+                          adjustsFontSizeToFit
+                        >
+                          {item}
+                        </Text>
+                      )}
+                      {isMarked && !isFreeSpace && (
+                        <View style={styles.checkMark}>
+                          <IconSymbol 
+                            ios_icon_name="checkmark.circle.fill" 
+                            android_material_icon_name="check-circle"
+                            size={24} 
+                            color={colors.card} 
+                          />
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </ImageBackground>
           </View>
         </View>
 
-        <Modal
-          visible={showContinueModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowContinueModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{continueModalTitle}</Text>
-              <Text style={styles.modalMessage}>{continueModalMessage}</Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.newGameButton}
+            onPress={() => {
+              console.log('HomeScreen: Create new card button tapped - generating new random card');
+              if (selectedTemplate) {
+                createNewCard(selectedTemplate);
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="arrow.clockwise" 
+              android_material_icon_name="refresh"
+              size={20} 
+              color={colors.card} 
+            />
+            <Text style={styles.newGameButtonText}>Create a New Card</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Modal
+        visible={showContinueModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowContinueModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{continueModalTitle}</Text>
+            <Text style={styles.modalMessage}>{continueModalMessage}</Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => handleContinueResponse(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalButtonTextSecondary}>No, Save Game</Text>
+              </TouchableOpacity>
               
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonSecondary]}
-                  onPress={() => handleContinueResponse(false)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.modalButtonTextSecondary}>No, Save Game</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonPrimary]}
-                  onPress={() => handleContinueResponse(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.modalButtonTextPrimary}>Yes, Continue!</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={() => handleContinueResponse(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalButtonTextPrimary}>Yes, Continue!</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-      </ImageBackground>
-    </View>
+        </View>
+      </Modal>
+    </ImageBackground>
   );
 }
 
@@ -1462,7 +1512,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shareableCard: {
+  bingoCardContainer: {
+    width: width - 40,
+    maxWidth: 550,
+    alignItems: 'center',
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
+  },
+  cardSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+  },
+  hiddenShareableCard: {
+    position: 'absolute',
+    left: -10000,
+    top: -10000,
     width: width - 40,
     maxWidth: 550,
     aspectRatio: 0.85,

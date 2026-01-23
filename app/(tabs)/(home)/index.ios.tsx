@@ -1265,8 +1265,63 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.cardCenterContainer}>
+          <View style={styles.bingoCardContainer}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{bannerText}</Text>
+              <Text style={styles.cardSubtitle}>{bannerSubtext}</Text>
+            </View>
+
+            <View style={styles.bingoGrid}>
+              {currentGame?.items?.slice(0, 25).map((item, index) => {
+                const isMarked = currentGame.marked_cells.includes(index);
+                const isFreeSpace = index === 12;
+                const cellKey = index;
+                
+                return (
+                  <TouchableOpacity
+                    key={cellKey}
+                    style={[
+                      styles.bingoCell,
+                      isMarked && styles.bingoCellMarked,
+                      isFreeSpace && styles.bingoCellFree
+                    ]}
+                    onPress={() => toggleCell(index)}
+                    activeOpacity={0.7}
+                  >
+                    {isFreeSpace ? (
+                      <View style={styles.freeSpaceContent}>
+                        <Text style={styles.freeSpaceText}>FREE</Text>
+                      </View>
+                    ) : (
+                      <Text 
+                        style={[
+                          styles.cellText,
+                          isMarked && styles.cellTextMarked
+                        ]}
+                        numberOfLines={3}
+                        adjustsFontSizeToFit
+                      >
+                        {item}
+                      </Text>
+                    )}
+                    {isMarked && !isFreeSpace && (
+                      <View style={styles.checkMark}>
+                        <IconSymbol 
+                          ios_icon_name="checkmark.circle.fill" 
+                          android_material_icon_name="check-circle"
+                          size={24} 
+                          color={colors.card} 
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           <View 
-            style={styles.shareableCard}
+            style={styles.hiddenShareableCard}
             ref={bingoCardRef}
             collapsable={false}
           >
@@ -1286,18 +1341,16 @@ export default function HomeScreen() {
                 {currentGame?.items?.slice(0, 25).map((item, index) => {
                   const isMarked = currentGame.marked_cells.includes(index);
                   const isFreeSpace = index === 12;
-                  const cellKey = index;
+                  const cellKey = `share-${index}`;
                   
                   return (
-                    <TouchableOpacity
+                    <View
                       key={cellKey}
                       style={[
                         styles.bingoCell,
                         isMarked && styles.bingoCellMarked,
                         isFreeSpace && styles.bingoCellFree
                       ]}
-                      onPress={() => toggleCell(index)}
-                      activeOpacity={0.7}
                     >
                       {isFreeSpace ? (
                         <View style={styles.freeSpaceContent}>
@@ -1325,7 +1378,7 @@ export default function HomeScreen() {
                           />
                         </View>
                       )}
-                    </TouchableOpacity>
+                    </View>
                   );
                 })}
               </View>
@@ -1448,7 +1501,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shareableCard: {
+  bingoCardContainer: {
+    width: width - 40,
+    maxWidth: 550,
+    alignItems: 'center',
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
+  },
+  cardSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+  },
+  hiddenShareableCard: {
+    position: 'absolute',
+    left: -10000,
+    top: -10000,
     width: width - 40,
     maxWidth: 550,
     aspectRatio: 0.85,
