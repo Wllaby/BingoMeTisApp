@@ -11,7 +11,8 @@ import {
   Platform,
   ImageBackground,
   ImageSourcePropType,
-  Modal
+  Modal,
+  Share
 } from "react-native";
 import { Stack, useRouter, useFocusEffect } from "expo-router";
 import Constants from "expo-constants";
@@ -22,6 +23,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, runOnJS } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Clipboard from 'expo-clipboard';
+import { captureRef } from 'react-native-view-shot';
 
 const { width, height } = Dimensions.get('window');
 const CELL_SIZE = (width - 80) / 5;
@@ -293,6 +295,7 @@ export default function HomeScreen() {
   
   const router = useRouter();
   const confettiRef = useRef<any>(null);
+  const bingoCardRef = useRef<View>(null);
   const [templates, setTemplates] = useState<BingoTemplate[]>([]);
   const [activeGames, setActiveGames] = useState<BingoGame[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<BingoTemplate | null>(null);
@@ -301,6 +304,7 @@ export default function HomeScreen() {
   const [showTemplateList, setShowTemplateList] = useState(true);
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const customThemeBackgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
@@ -986,6 +990,68 @@ export default function HomeScreen() {
     }
   };
 
+  const handleShareBingoCard = async () => {
+    console.log('HomeScreen: Share button tapped - capturing bingo card screenshot');
+    
+    if (!bingoCardRef.current || !currentGame) {
+      console.error('HomeScreen: Bingo card ref or current game not available');
+      Alert.alert('Error', 'Unable to share at this moment. Please try again.');
+      return;
+    }
+
+    try {
+      setIsSharing(true);
+      
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+
+      console.log('HomeScreen: Capturing screenshot of bingo card');
+      const uri = await captureRef(bingoCardRef, {
+        format: 'png',
+        quality: 1,
+      });
+
+      console.log('HomeScreen: Screenshot captured successfully, URI:', uri);
+
+      const bingoCount = countBingos(currentGame.marked_cells);
+      const progressText = bingoCount === 0 
+        ? 'just started' 
+        : bingoCount === 1 
+        ? 'got 1 BINGO' 
+        : `got ${bingoCount} BINGOs`;
+      
+      const shareMessage = `Check out my ${currentGame.template_name} Bingo card! I ${progressText}! 🎉`;
+
+      console.log('HomeScreen: Opening share dialog with message:', shareMessage);
+
+      const result = await Share.share(
+        {
+          message: shareMessage,
+          url: uri,
+        },
+        {
+          dialogTitle: 'Share your Bingo card',
+        }
+      );
+
+      if (result.action === Share.sharedAction) {
+        console.log('HomeScreen: User shared the bingo card successfully');
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('HomeScreen: User dismissed the share dialog');
+      }
+
+      setIsSharing(false);
+    } catch (error) {
+      console.error('HomeScreen: Error sharing bingo card', error);
+      setIsSharing(false);
+      Alert.alert('Error', 'Failed to share bingo card. Please try again.');
+    }
+  };
+
   if (loading) {
     const loadingText = "Loading...";
     return (
@@ -1197,22 +1263,20 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <View style={styles.gameHeaderSpacer} />
             <TouchableOpacity 
-              onPress={() => {
-                console.log('HomeScreen: Share button tapped');
-                Alert.alert('Coming Soon', 'Share functionality will be available soon!');
-              }}
-              style={styles.shareButton}
+              onPress={handleShareBingoCard}
+              style={[styles.shareButton, isSharing && styles.shareButtonDisabled]}
+              disabled={isSharing}
             >
               <IconSymbol 
                 ios_icon_name="square.and.arrow.up" 
                 android_material_icon_name="share"
                 size={24} 
-                color={colors.text} 
+                color={isSharing ? colors.textSecondary : colors.text} 
               />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.cardCenterContainer}>
+          <View style={styles.cardCenterContainer} ref={bingoCardRef} collapsable={false}>
             <View style={styles.bingoGrid}>
               {currentGame?.items?.slice(0, 25).map((item, index) => {
                 const isMarked = currentGame.marked_cells.includes(index);
@@ -1519,6 +1583,9 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
+  },
+  shareButtonDisabled: {
+    opacity: 0.5,
   },
   bingoGrid: {
     flexDirection: 'row',
