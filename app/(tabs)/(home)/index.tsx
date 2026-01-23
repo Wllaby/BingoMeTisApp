@@ -561,8 +561,23 @@ export default function HomeScreen() {
     console.log('HomeScreen: Theme pressed', template.name);
     console.log('HomeScreen: Opening theme options modal');
     
-    // Directly create a new card instead of showing modal
-    createNewCard(template);
+    // Show modal with options
+    setSelectedThemeForOptions(template);
+    setShowThemeOptionsModal(true);
+  };
+
+  const handleStartGame = () => {
+    console.log('HomeScreen: Start game button pressed');
+    if (selectedThemeForOptions) {
+      createNewCard(selectedThemeForOptions);
+    }
+  };
+
+  const handleCreateNewCard = () => {
+    console.log('HomeScreen: Create new card button pressed');
+    if (selectedThemeForOptions) {
+      createNewCard(selectedThemeForOptions);
+    }
   };
 
   const resumeGame = (game: BingoGame) => {
@@ -697,6 +712,13 @@ export default function HomeScreen() {
     
     if (index === 12) {
       console.log('HomeScreen: Cannot toggle FREE SPACE');
+      return;
+    }
+    
+    // Don't allow toggling cells before game is started
+    if (!currentGame.is_started) {
+      console.log('HomeScreen: Cannot toggle cells before game is started');
+      Alert.alert('Start Game First', 'Please click "Start Game" before marking cells.');
       return;
     }
     
@@ -1147,6 +1169,59 @@ export default function HomeScreen() {
             <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Theme Options Modal */}
+        <Modal
+          visible={showThemeOptionsModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowThemeOptionsModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>{selectedThemeForOptions?.name}</Text>
+              <Text style={styles.modalMessage}>Choose an option to continue</Text>
+              
+              <View style={styles.themeOptionsButtons}>
+                <TouchableOpacity
+                  style={[styles.themeOptionButton, styles.themeOptionButtonPrimary]}
+                  onPress={handleStartGame}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol 
+                    ios_icon_name="play.fill" 
+                    android_material_icon_name="play-arrow"
+                    size={24} 
+                    color={colors.card} 
+                  />
+                  <Text style={styles.themeOptionButtonTextPrimary}>Start Game</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.themeOptionButton, styles.themeOptionButtonPrimary]}
+                  onPress={handleCreateNewCard}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol 
+                    ios_icon_name="arrow.clockwise" 
+                    android_material_icon_name="refresh"
+                    size={24} 
+                    color={colors.card} 
+                  />
+                  <Text style={styles.themeOptionButtonTextPrimary}>Create a New Card</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowThemeOptionsModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ImageBackground>
     );
   }
