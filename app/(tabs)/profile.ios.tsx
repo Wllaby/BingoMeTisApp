@@ -9,7 +9,9 @@ import {
   StyleSheet, 
   ScrollView,
   TouchableOpacity,
-  Alert
+  Alert,
+  ImageBackground,
+  ImageSourcePropType
 } from "react-native";
 import { Stack } from "expo-router";
 import Constants from "expo-constants";
@@ -18,6 +20,12 @@ import { IconSymbol } from "@/components/IconSymbol";
 
 // Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+
+function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
+  if (!source) return { uri: '' };
+  if (typeof source === 'string') return { uri: source };
+  return source as ImageSourcePropType;
+}
 
 interface GameHistory {
   id: string;
@@ -34,6 +42,8 @@ export default function HistoryScreen() {
   
   const [games, setGames] = useState<GameHistory[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
 
   useEffect(() => {
     console.log('HistoryScreen: Loading game history');
@@ -161,90 +171,103 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Game History</Text>
-        <Text style={styles.headerSubtitle}>Your past bingo games</Text>
-      </View>
+    <ImageBackground 
+      source={defaultBackgroundImage} 
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay} />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Game History</Text>
+          <Text style={styles.headerSubtitle}>Your past bingo games</Text>
+        </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {loading ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Loading...</Text>
-          </View>
-        ) : games.length === 0 ? (
-          <View style={styles.emptyState}>
-            <IconSymbol 
-              ios_icon_name="tray" 
-              android_material_icon_name="inbox"
-              size={64} 
-              color={colors.textSecondary} 
-            />
-            <Text style={styles.emptyText}>No games yet</Text>
-            <Text style={styles.emptySubtext}>
-              Start playing to see your game history here
-            </Text>
-          </View>
-        ) : (
-          <>
-            {games.map((game) => {
-              const completionText = getBingoCompletionText(game);
-              
-              return (
-                <TouchableOpacity
-                  key={game.id}
-                  style={styles.gameCard}
-                  onPress={() => {
-                    console.log('HistoryScreen: Game card tapped', game.id);
-                    Alert.alert('Coming Soon', 'View game details will be available soon!');
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.gameCardHeader}>
-                    <View style={styles.gameCardTitle}>
-                      <Text style={styles.gameCardName}>{game.template_name}</Text>
-                      {game.completed && (
-                        <View style={styles.completedBadge}>
-                          <IconSymbol 
-                            ios_icon_name="checkmark.circle.fill" 
-                            android_material_icon_name="check-circle"
-                            size={16} 
-                            color={colors.card} 
-                          />
-                          <Text style={styles.completedText}>BINGO!</Text>
-                        </View>
-                      )}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {loading ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>Loading...</Text>
+            </View>
+          ) : games.length === 0 ? (
+            <View style={styles.emptyState}>
+              <IconSymbol 
+                ios_icon_name="tray" 
+                android_material_icon_name="inbox"
+                size={64} 
+                color="#FFFFFF" 
+              />
+              <Text style={styles.emptyText}>No games yet</Text>
+              <Text style={styles.emptySubtext}>
+                Start playing to see your game history here
+              </Text>
+            </View>
+          ) : (
+            <>
+              {games.map((game) => {
+                const completionText = getBingoCompletionText(game);
+                
+                return (
+                  <TouchableOpacity
+                    key={game.id}
+                    style={styles.gameCard}
+                    onPress={() => {
+                      console.log('HistoryScreen: Game card tapped', game.id);
+                      Alert.alert('Coming Soon', 'View game details will be available soon!');
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.gameCardHeader}>
+                      <View style={styles.gameCardTitle}>
+                        <Text style={styles.gameCardName}>{game.template_name}</Text>
+                        {game.completed && (
+                          <View style={styles.completedBadge}>
+                            <IconSymbol 
+                              ios_icon_name="checkmark.circle.fill" 
+                              android_material_icon_name="check-circle"
+                              size={16} 
+                              color={colors.card} 
+                            />
+                            <Text style={styles.completedText}>BINGO!</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.gameCardDate}>
+                        {formatDate(game.created_at)}
+                      </Text>
                     </View>
-                    <Text style={styles.gameCardDate}>
-                      {formatDate(game.created_at)}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.gameCardStats}>
-                    <View style={styles.stat}>
-                      <Text style={styles.statValue}>{completionText}</Text>
-                      <Text style={styles.statLabel}>Completion</Text>
+                    
+                    <View style={styles.gameCardStats}>
+                      <View style={styles.stat}>
+                        <Text style={styles.statValue}>{completionText}</Text>
+                        <Text style={styles.statLabel}>Completion</Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -254,12 +277,18 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
     marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   scrollView: {
     flex: 1,
@@ -277,27 +306,33 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     marginTop: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   emptySubtext: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     marginTop: 8,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   gameCard: {
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   gameCardHeader: {
     marginBottom: 16,
