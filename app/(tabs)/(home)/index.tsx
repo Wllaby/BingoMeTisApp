@@ -1007,6 +1007,7 @@ export default function HomeScreen() {
     const customTemplates = templates.filter(t => t.is_custom);
     const hasCustomTemplates = customTemplates.length > 0;
     const hasActiveGames = activeGames.length > 0;
+    const bannerText = 'Bingo MeTis';
     
     return (
       <ImageBackground 
@@ -1016,6 +1017,12 @@ export default function HomeScreen() {
       >
         <View style={styles.overlay} />
         <Stack.Screen options={{ headerShown: false }} />
+        
+        {/* Top Banner */}
+        <View style={styles.topBanner}>
+          <Text style={styles.bannerText}>{bannerText}</Text>
+        </View>
+        
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -1140,6 +1147,9 @@ export default function HomeScreen() {
     ? 'Congratulations! Would you like to continue to 3 bingos?'
     : 'Amazing! Would you like to continue to fill the entire card?';
   
+  const bannerText = currentGame?.template_name || '';
+  const bannerSubtext = targetText;
+  
   return (
     <ImageBackground 
       source={backgroundImage} 
@@ -1148,6 +1158,12 @@ export default function HomeScreen() {
     >
       <View style={styles.overlay} />
       <Stack.Screen options={{ headerShown: false }} />
+      
+      {/* Top Banner */}
+      <View style={styles.topBanner}>
+        <Text style={styles.bannerText}>{bannerText}</Text>
+        <Text style={styles.bannerSubtext}>{bannerSubtext}</Text>
+      </View>
       
       <ConfettiCannon
         count={200}
@@ -1167,10 +1183,7 @@ export default function HomeScreen() {
               color={colors.text} 
             />
           </TouchableOpacity>
-          <View style={styles.gameHeaderText}>
-            <Text style={styles.gameTitle}>{currentGame?.template_name}</Text>
-            <Text style={styles.gameSubtitle}>{targetText}</Text>
-          </View>
+          <View style={styles.gameHeaderSpacer} />
           <TouchableOpacity 
             onPress={() => {
               console.log('HomeScreen: Share button tapped');
@@ -1303,6 +1316,26 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
+  topBanner: {
+    backgroundColor: 'rgba(211, 211, 211, 0.95)',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bannerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  bannerSubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1333,7 +1366,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 30,
-    marginTop: 80,
+    marginTop: 20,
   },
   headerSubtitle: {
     fontSize: 20,
@@ -1449,36 +1482,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 20,
+    marginTop: 10,
   },
   backButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 8,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
   },
-  gameHeaderText: {
+  gameHeaderSpacer: {
     flex: 1,
-    alignItems: 'center',
-  },
-  gameTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
-  },
-  gameSubtitle: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginTop: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 5,
   },
   shareButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 8,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
   },
   bingoGrid: {
     flexDirection: 'row',
