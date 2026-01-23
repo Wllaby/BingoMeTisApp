@@ -326,7 +326,30 @@ export default function HomeScreen() {
   const isFamilyGatheringsTheme = selectedTemplate?.name === 'Family gatherings';
   const isSelfCareTheme = selectedTemplate?.name === 'Self-care';
   const isTeenAngstersTheme = selectedTemplate?.name === 'Teenangsters';
-  const backgroundImage = isCustomTheme ? customThemeBackgroundImage : isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : isFamilyGatheringsTheme ? familyGatheringsBackgroundImage : isSelfCareTheme ? selfCareBackgroundImage : isTeenAngstersTheme ? teenangstersBackgroundImage : defaultBackgroundImage;
+  
+  const backgroundImage = isCustomTheme 
+    ? customThemeBackgroundImage 
+    : isKidsTheme 
+    ? kidsBackgroundImage 
+    : isThingsKidsDoTheme 
+    ? thingsKidsDoBackgroundImage 
+    : isOfficeTheme 
+    ? officeBackgroundImage 
+    : isCustomerServiceTheme 
+    ? customerServiceBackgroundImage 
+    : isSpousesSighsTheme 
+    ? spousesSighsBackgroundImage 
+    : isSpousesHeartsTheme 
+    ? spousesHeartsBackgroundImage 
+    : isDatingTheme 
+    ? datingBackgroundImage 
+    : isFamilyGatheringsTheme 
+    ? familyGatheringsBackgroundImage 
+    : isSelfCareTheme 
+    ? selfCareBackgroundImage 
+    : isTeenAngstersTheme 
+    ? teenangstersBackgroundImage 
+    : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
@@ -445,6 +468,7 @@ export default function HomeScreen() {
   const createNewCard = async (template: BingoTemplate) => {
     console.log('HomeScreen: Creating new card with template', template.name);
     console.log('HomeScreen: Template has', template.items.length, 'total options available');
+    console.log('HomeScreen: Template is_custom:', template.is_custom);
     
     // Check if user already has 5 active games
     if (activeGames.length >= 5) {
@@ -530,7 +554,10 @@ export default function HomeScreen() {
     
     const template = templates.find(t => t.id === game.template_id);
     if (template) {
+      console.log('HomeScreen: Found template for game, is_custom:', template.is_custom);
       setSelectedTemplate(template);
+    } else {
+      console.log('HomeScreen: Template not found for game, template_id:', game.template_id);
     }
     
     setCurrentGame(game);

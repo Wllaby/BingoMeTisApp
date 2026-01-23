@@ -303,6 +303,7 @@ export default function HomeScreen() {
   const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
+  const customThemeBackgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/97350fb6-a346-4936-b922-f17f9290a4b1.webp'));
   const thingsKidsDoBackgroundImage = resolveImageSource(require('@/assets/images/7007edc2-3eba-483b-a36f-b7d6ed4e8a9a.jpeg'));
   const officeBackgroundImage = resolveImageSource(require('@/assets/images/dc9f2533-409a-47aa-a3fc-63b6e289409c.webp'));
@@ -314,6 +315,7 @@ export default function HomeScreen() {
   const selfCareBackgroundImage = resolveImageSource(require('@/assets/images/d43faca0-bba5-4a76-8fed-12d40c226140.webp'));
   const teenangstersBackgroundImage = resolveImageSource(require('@/assets/images/defcdfaa-babd-4a93-9b92-4eda2ac624d6.webp'));
   
+  const isCustomTheme = selectedTemplate?.is_custom === true;
   const isKidsTheme = selectedTemplate?.name === 'Kids';
   const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
   const isOfficeTheme = selectedTemplate?.name === 'Office';
@@ -324,7 +326,30 @@ export default function HomeScreen() {
   const isFamilyGatheringsTheme = selectedTemplate?.name === 'Family gatherings';
   const isSelfCareTheme = selectedTemplate?.name === 'Self-care';
   const isTeenAngstersTheme = selectedTemplate?.name === 'Teenangsters';
-  const backgroundImage = isKidsTheme ? kidsBackgroundImage : isThingsKidsDoTheme ? thingsKidsDoBackgroundImage : isOfficeTheme ? officeBackgroundImage : isCustomerServiceTheme ? customerServiceBackgroundImage : isSpousesSighsTheme ? spousesSighsBackgroundImage : isSpousesHeartsTheme ? spousesHeartsBackgroundImage : isDatingTheme ? datingBackgroundImage : isFamilyGatheringsTheme ? familyGatheringsBackgroundImage : isSelfCareTheme ? selfCareBackgroundImage : isTeenAngstersTheme ? teenangstersBackgroundImage : defaultBackgroundImage;
+  
+  const backgroundImage = isCustomTheme 
+    ? customThemeBackgroundImage 
+    : isKidsTheme 
+    ? kidsBackgroundImage 
+    : isThingsKidsDoTheme 
+    ? thingsKidsDoBackgroundImage 
+    : isOfficeTheme 
+    ? officeBackgroundImage 
+    : isCustomerServiceTheme 
+    ? customerServiceBackgroundImage 
+    : isSpousesSighsTheme 
+    ? spousesSighsBackgroundImage 
+    : isSpousesHeartsTheme 
+    ? spousesHeartsBackgroundImage 
+    : isDatingTheme 
+    ? datingBackgroundImage 
+    : isFamilyGatheringsTheme 
+    ? familyGatheringsBackgroundImage 
+    : isSelfCareTheme 
+    ? selfCareBackgroundImage 
+    : isTeenAngstersTheme 
+    ? teenangstersBackgroundImage 
+    : defaultBackgroundImage;
 
   // Reload templates and active games when screen comes into focus
   useFocusEffect(
@@ -443,6 +468,7 @@ export default function HomeScreen() {
   const createNewCard = async (template: BingoTemplate) => {
     console.log('HomeScreen: Creating new card with template', template.name);
     console.log('HomeScreen: Template has', template.items.length, 'total options available');
+    console.log('HomeScreen: Template is_custom:', template.is_custom);
     
     // Check if user already has 5 active games
     if (activeGames.length >= 5) {
@@ -528,7 +554,10 @@ export default function HomeScreen() {
     
     const template = templates.find(t => t.id === game.template_id);
     if (template) {
+      console.log('HomeScreen: Found template for game, is_custom:', template.is_custom);
       setSelectedTemplate(template);
+    } else {
+      console.log('HomeScreen: Template not found for game, template_id:', game.template_id);
     }
     
     setCurrentGame(game);
@@ -961,7 +990,7 @@ export default function HomeScreen() {
     const loadingText = "Loading...";
     return (
       <ImageBackground 
-        source={teenangstersBackgroundImage} 
+        source={customThemeBackgroundImage} 
         style={styles.container}
         resizeMode="cover"
       >
