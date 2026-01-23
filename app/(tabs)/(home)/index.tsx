@@ -1371,9 +1371,9 @@ export default function HomeScreen() {
                       <View
                         key={cellKey}
                         style={[
-                          styles.bingoCell,
-                          isMarked && styles.bingoCellMarked,
-                          isFreeSpace && styles.bingoCellFree
+                          styles.shareableBingoCell,
+                          isMarked && styles.shareableBingoCellMarked,
+                          isFreeSpace && styles.shareableBingoCellFree
                         ]}
                       >
                         {isFreeSpace ? (
@@ -1678,6 +1678,27 @@ const styles = StyleSheet.create({
   bingoCellFree: {
     backgroundColor: colors.highlight,
     borderColor: colors.highlight,
+  },
+  shareableBingoCell: {
+    width: (width - 60) / 5,
+    height: (width - 60) / 5,
+    maxWidth: 96,
+    maxHeight: 96,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 4,
+  },
+  shareableBingoCellMarked: {
+    backgroundColor: 'rgba(76, 175, 80, 0.6)',
+    borderColor: 'rgba(76, 175, 80, 0.8)',
+  },
+  shareableBingoCellFree: {
+    backgroundColor: 'rgba(255, 193, 7, 0.6)',
+    borderColor: 'rgba(255, 193, 7, 0.8)',
   },
   cellText: {
     fontSize: 11,
