@@ -991,7 +991,7 @@ export default function HomeScreen() {
   };
 
   const handleShareBingoCard = async () => {
-    console.log('HomeScreen: Share button tapped - capturing bingo card screenshot');
+    console.log('HomeScreen: Share button tapped - capturing bingo card screenshot with background');
     
     if (!bingoCardRef.current || !currentGame) {
       console.error('HomeScreen: Bingo card ref or current game not available');
@@ -1006,7 +1006,7 @@ export default function HomeScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
 
-      console.log('HomeScreen: Capturing screenshot of bingo card');
+      console.log('HomeScreen: Capturing screenshot of bingo card with background image');
       const uri = await captureRef(bingoCardRef, {
         format: 'png',
         quality: 1,
@@ -1271,53 +1271,65 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.cardCenterContainer} ref={bingoCardRef} collapsable={false}>
-          <View style={styles.bingoGrid}>
-            {currentGame?.items?.slice(0, 25).map((item, index) => {
-              const isMarked = currentGame.marked_cells.includes(index);
-              const isFreeSpace = index === 12;
-              const cellKey = index;
+          <ImageBackground 
+            source={backgroundImage} 
+            style={styles.shareableBackground}
+            resizeMode="cover"
+          >
+            <View style={styles.shareableOverlay} />
+            <View style={styles.shareableContent}>
+              <Text style={styles.shareableTitle}>{bannerText}</Text>
+              <Text style={styles.shareableSubtitle}>{bannerSubtext}</Text>
               
-              return (
-                <TouchableOpacity
-                  key={cellKey}
-                  style={[
-                    styles.bingoCell,
-                    isMarked && styles.bingoCellMarked,
-                    isFreeSpace && styles.bingoCellFree
-                  ]}
-                  onPress={() => toggleCell(index)}
-                  activeOpacity={0.7}
-                >
-                  {isFreeSpace ? (
-                    <View style={styles.freeSpaceContent}>
-                      <Text style={styles.freeSpaceText}>FREE</Text>
-                    </View>
-                  ) : (
-                    <Text 
+              <View style={styles.bingoGrid}>
+                {currentGame?.items?.slice(0, 25).map((item, index) => {
+                  const isMarked = currentGame.marked_cells.includes(index);
+                  const isFreeSpace = index === 12;
+                  const cellKey = index;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={cellKey}
                       style={[
-                        styles.cellText,
-                        isMarked && styles.cellTextMarked
+                        styles.bingoCell,
+                        isMarked && styles.bingoCellMarked,
+                        isFreeSpace && styles.bingoCellFree
                       ]}
-                      numberOfLines={3}
-                      adjustsFontSizeToFit
+                      onPress={() => toggleCell(index)}
+                      activeOpacity={0.7}
                     >
-                      {item}
-                    </Text>
-                  )}
-                  {isMarked && !isFreeSpace && (
-                    <View style={styles.checkMark}>
-                      <IconSymbol 
-                        ios_icon_name="checkmark.circle.fill" 
-                        android_material_icon_name="check-circle"
-                        size={24} 
-                        color={colors.card} 
-                      />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                      {isFreeSpace ? (
+                        <View style={styles.freeSpaceContent}>
+                          <Text style={styles.freeSpaceText}>FREE</Text>
+                        </View>
+                      ) : (
+                        <Text 
+                          style={[
+                            styles.cellText,
+                            isMarked && styles.cellTextMarked
+                          ]}
+                          numberOfLines={3}
+                          adjustsFontSizeToFit
+                        >
+                          {item}
+                        </Text>
+                      )}
+                      {isMarked && !isFreeSpace && (
+                        <View style={styles.checkMark}>
+                          <IconSymbol 
+                            ios_icon_name="checkmark.circle.fill" 
+                            android_material_icon_name="check-circle"
+                            size={24} 
+                            color={colors.card} 
+                          />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </ImageBackground>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -1433,6 +1445,41 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  shareableBackground: {
+    width: width - 40,
+    maxWidth: 550,
+    aspectRatio: 0.85,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareableOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  shareableContent: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  shareableTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
+  },
+  shareableSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   loadingText: {
     fontSize: 18,
@@ -1579,16 +1626,16 @@ const styles = StyleSheet.create({
   bingoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: width - 40,
-    maxWidth: 500,
+    width: width - 80,
+    maxWidth: 480,
     aspectRatio: 1,
     gap: 4,
   },
   bingoCell: {
-    width: (width - 60) / 5,
-    height: (width - 60) / 5,
-    maxWidth: 96,
-    maxHeight: 96,
+    width: (width - 100) / 5,
+    height: (width - 100) / 5,
+    maxWidth: 92,
+    maxHeight: 92,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 8,
     borderWidth: 2,
