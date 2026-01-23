@@ -52,13 +52,8 @@ interface BingoGame {
   marked_cells: number[];
   completed: boolean;
   items?: string[];
-  started_at?: string;
   bingo_count: number;
   target_bingo_count: number;
-  is_started?: boolean;
-  first_bingo_time?: number;
-  three_bingos_time?: number;
-  full_card_time?: number;
 }
 
 interface SwipeableCustomThemeProps {
@@ -306,8 +301,6 @@ export default function HomeScreen() {
   const [showTemplateList, setShowTemplateList] = useState(true);
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
-  const [showThemeOptionsModal, setShowThemeOptionsModal] = useState(false);
-  const [selectedThemeForOptions, setSelectedThemeForOptions] = useState<BingoTemplate | null>(null);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const kidsBackgroundImage = resolveImageSource(require('@/assets/images/5811b5ff-ad72-4560-b1da-ab416d35c209.jpeg'));
@@ -410,13 +403,8 @@ export default function HomeScreen() {
         marked_cells: game.markedCells || game.marked_cells || [],
         completed: game.completed,
         items: game.items,
-        started_at: game.startedAt || game.started_at,
         bingo_count: game.bingoCount || game.bingo_count || 0,
         target_bingo_count: 1,
-        is_started: game.isStarted || game.is_started || false,
-        first_bingo_time: game.firstBingoTime || game.first_bingo_time,
-        three_bingos_time: game.threeBingosTime || game.three_bingos_time,
-        full_card_time: game.fullCardTime || game.full_card_time,
       }));
       
       setActiveGames(transformedGames);
@@ -495,89 +483,28 @@ export default function HomeScreen() {
         marked_cells: [12],
         completed: false,
         items: gameItems,
-        started_at: new Date().toISOString(),
         bingo_count: 0,
         target_bingo_count: 1,
-        is_started: false,
       };
       
       setCurrentGame(newGame);
       setSelectedTemplate(template);
       setShowTemplateList(false);
-      setShowThemeOptionsModal(false);
       
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      console.log('HomeScreen: Game card created (not started yet)');
+      console.log('HomeScreen: Game card created and ready to play');
     } catch (error) {
       console.error('HomeScreen: Error creating game', error);
       Alert.alert('Error', 'Failed to create game. Please try again.');
     }
   };
 
-  const startGame = async () => {
-    if (!currentGame || !BACKEND_URL) return;
-    
-    console.log('HomeScreen: Starting game timer for game', currentGame.id);
-    
-    try {
-      // Update backend to mark game as started
-      const response = await fetch(`${BACKEND_URL}/games/${currentGame.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          is_started: true,
-          started_at: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const updatedGame = {
-        ...currentGame,
-        is_started: true,
-        started_at: new Date().toISOString(),
-      };
-      
-      setCurrentGame(updatedGame);
-      
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
-      console.log('HomeScreen: Game timer started at', updatedGame.started_at);
-    } catch (error) {
-      console.error('HomeScreen: Error starting game timer', error);
-      Alert.alert('Error', 'Failed to start game timer. Please try again.');
-    }
-  };
-
   const handleThemePress = (template: BingoTemplate) => {
     console.log('HomeScreen: Theme pressed', template.name);
-    console.log('HomeScreen: Opening theme options modal');
-    
-    // Show modal with options
-    setSelectedThemeForOptions(template);
-    setShowThemeOptionsModal(true);
-  };
-
-  const handleStartGame = () => {
-    console.log('HomeScreen: Start game button pressed');
-    if (selectedThemeForOptions) {
-      createNewCard(selectedThemeForOptions);
-    }
-  };
-
-  const handleCreateNewCard = () => {
-    console.log('HomeScreen: Create new card button pressed');
-    if (selectedThemeForOptions) {
-      createNewCard(selectedThemeForOptions);
-    }
+    console.log('HomeScreen: Creating new card directly');
+    createNewCard(template);
   };
 
   const resumeGame = (game: BingoGame) => {
@@ -627,11 +554,6 @@ export default function HomeScreen() {
 
   const saveGameToHistory = async (game: BingoGame, bingoCount: number) => {
     console.log('HomeScreen: Saving game to history');
-    const startTime = new Date(game.started_at || new Date()).getTime();
-    const endTime = new Date().getTime();
-    const durationSeconds = Math.floor((endTime - startTime) / 1000);
-    
-    console.log('HomeScreen: Game duration:', durationSeconds, 'seconds');
     
     try {
       if (!BACKEND_URL) {
@@ -659,7 +581,7 @@ export default function HomeScreen() {
 
       const savedGame = await response.json();
       console.log('HomeScreen: Game saved to history successfully', savedGame.id);
-      console.log('HomeScreen: Game completed with', bingoCount, 'bingos in', durationSeconds, 'seconds');
+      console.log('HomeScreen: Game completed with', bingoCount, 'bingos');
     } catch (error) {
       console.error('HomeScreen: Error saving game to history', error);
       // Don't show error to user, just log it
@@ -715,13 +637,6 @@ export default function HomeScreen() {
       return;
     }
     
-    // Don't allow toggling cells before game is started
-    if (!currentGame.is_started) {
-      console.log('HomeScreen: Cannot toggle cells before game is started');
-      Alert.alert('Start Game First', 'Please click "Start Game" before marking cells.');
-      return;
-    }
-    
     console.log('HomeScreen: Toggling cell', index);
     const newMarkedCells = currentGame.marked_cells.includes(index)
       ? currentGame.marked_cells.filter(i => i !== index)
@@ -741,14 +656,6 @@ export default function HomeScreen() {
     const bingoCount = countBingos(newMarkedCells);
     console.log('HomeScreen: Current bingo count:', bingoCount);
     
-    // Calculate elapsed time if game is started
-    let elapsedSeconds = 0;
-    if (currentGame.is_started && currentGame.started_at) {
-      const startTime = new Date(currentGame.started_at).getTime();
-      const currentTime = new Date().getTime();
-      elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-    }
-    
     // Prepare update data
     const updateData: any = {
       marked_cells: newMarkedCells,
@@ -757,7 +664,6 @@ export default function HomeScreen() {
     // Check for pit stops
     if (currentGame.target_bingo_count === 1 && bingoCount >= 1 && currentGame.bingo_count < 1) {
       console.log('HomeScreen: First BINGO achieved!');
-      updateData.first_bingo_time = elapsedSeconds;
       
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -766,14 +672,12 @@ export default function HomeScreen() {
       setCurrentGame({
         ...updatedGame,
         bingo_count: bingoCount,
-        first_bingo_time: elapsedSeconds,
       });
       
       setNextTarget('3-bingos');
       setShowContinueModal(true);
     } else if (currentGame.target_bingo_count === 3 && bingoCount >= 3 && currentGame.bingo_count < 3) {
       console.log('HomeScreen: 3 BINGOs achieved!');
-      updateData.three_bingos_time = elapsedSeconds;
       
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -782,14 +686,12 @@ export default function HomeScreen() {
       setCurrentGame({
         ...updatedGame,
         bingo_count: bingoCount,
-        three_bingos_time: elapsedSeconds,
       });
       
       setNextTarget('full-card');
       setShowContinueModal(true);
     } else if (currentGame.target_bingo_count === 25 && newMarkedCells.length === 25 && currentGame.bingo_count < 25) {
       console.log('HomeScreen: Full card completed!');
-      updateData.full_card_time = elapsedSeconds;
       updateData.completed = true;
       
       if (Platform.OS !== 'web') {
@@ -1169,59 +1071,6 @@ export default function HomeScreen() {
             <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
           </TouchableOpacity>
         </ScrollView>
-
-        {/* Theme Options Modal */}
-        <Modal
-          visible={showThemeOptionsModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowThemeOptionsModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{selectedThemeForOptions?.name}</Text>
-              <Text style={styles.modalMessage}>Choose an option to continue</Text>
-              
-              <View style={styles.themeOptionsButtons}>
-                <TouchableOpacity
-                  style={[styles.themeOptionButton, styles.themeOptionButtonPrimary]}
-                  onPress={handleStartGame}
-                  activeOpacity={0.7}
-                >
-                  <IconSymbol 
-                    ios_icon_name="play.fill" 
-                    android_material_icon_name="play-arrow"
-                    size={24} 
-                    color={colors.card} 
-                  />
-                  <Text style={styles.themeOptionButtonTextPrimary}>Start Game</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.themeOptionButton, styles.themeOptionButtonPrimary]}
-                  onPress={handleCreateNewCard}
-                  activeOpacity={0.7}
-                >
-                  <IconSymbol 
-                    ios_icon_name="arrow.clockwise" 
-                    android_material_icon_name="refresh"
-                    size={24} 
-                    color={colors.card} 
-                  />
-                  <Text style={styles.themeOptionButtonTextPrimary}>Create a New Card</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowThemeOptionsModal(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </ImageBackground>
     );
   }
@@ -1239,8 +1088,6 @@ export default function HomeScreen() {
   const continueModalMessage = nextTarget === '3-bingos'
     ? 'Congratulations! Would you like to continue to 3 bingos?'
     : 'Amazing! Would you like to continue to fill the entire card?';
-  
-  const gameNotStarted = currentGame && !currentGame.is_started;
   
   return (
     <ImageBackground 
@@ -1340,26 +1187,10 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.buttonContainer}>
-          {gameNotStarted && (
-            <TouchableOpacity
-              style={styles.startGameButton}
-              onPress={startGame}
-              activeOpacity={0.7}
-            >
-              <IconSymbol 
-                ios_icon_name="play.fill" 
-                android_material_icon_name="play-arrow"
-                size={24} 
-                color={colors.card} 
-              />
-              <Text style={styles.startGameButtonText}>Start Game</Text>
-            </TouchableOpacity>
-          )}
-          
           <TouchableOpacity
             style={styles.newGameButton}
             onPress={() => {
-              console.log('HomeScreen: New Card button tapped - generating new random card');
+              console.log('HomeScreen: Create new card button tapped - generating new random card');
               if (selectedTemplate) {
                 createNewCard(selectedTemplate);
               }
@@ -1657,26 +1488,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 12,
   },
-  startGameButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 20,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  startGameButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.card,
-  },
   newGameButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1834,36 +1645,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '600',
-  },
-  themeOptionsButtons: {
-    width: '100%',
-    gap: 12,
-  },
-  themeOptionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-  },
-  themeOptionButtonPrimary: {
-    backgroundColor: colors.primary,
-  },
-  themeOptionButtonTextPrimary: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.card,
-  },
-  cancelButton: {
-    marginTop: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textSecondary,
   },
 });
