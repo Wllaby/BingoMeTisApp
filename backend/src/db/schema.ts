@@ -24,4 +24,8 @@ export const bingoGames = pgTable('bingo_games', {
   duration: integer('duration'),
   durationSeconds: integer('duration_seconds'),
   goalReached: text('goal_reached'),
+  isStarted: boolean('is_started').default(false).notNull(),
+  firstBingoTime: integer('first_bingo_time'),
+  threeBingosTime: integer('three_bingos_time'),
+  fullCardTime: integer('full_card_time'),
 });

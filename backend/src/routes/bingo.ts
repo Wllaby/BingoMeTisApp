@@ -278,6 +278,7 @@ export function register(app: App, fastify: FastifyInstance) {
         items: template.items,
         startedAt: new Date(),
         bingoCount: 0,
+        isStarted: false,
       }).returning();
 
       app.logger.info({ gameId: game.id, templateId: template.id }, 'New bingo game created successfully');
@@ -297,6 +298,10 @@ export function register(app: App, fastify: FastifyInstance) {
       completed?: boolean;
       completedAt?: string;
       duration?: number;
+      isStarted?: boolean;
+      firstBingoTime?: number;
+      threeBingosTime?: number;
+      fullCardTime?: number;
     };
     app.logger.info({ gameId: id, markedCount: body.markedCells?.length, bingoCount: body.bingoCount }, 'Updating bingo game progress');
 
@@ -321,6 +326,22 @@ export function register(app: App, fastify: FastifyInstance) {
         updates.duration = body.duration;
       }
 
+      if (body.isStarted !== undefined) {
+        updates.isStarted = body.isStarted;
+      }
+
+      if (body.firstBingoTime !== undefined) {
+        updates.firstBingoTime = body.firstBingoTime;
+      }
+
+      if (body.threeBingosTime !== undefined) {
+        updates.threeBingosTime = body.threeBingosTime;
+      }
+
+      if (body.fullCardTime !== undefined) {
+        updates.fullCardTime = body.fullCardTime;
+      }
+
       if (body.completed) {
         updates.completed = true;
         updates.completedAt = new Date();
@@ -335,7 +356,7 @@ export function register(app: App, fastify: FastifyInstance) {
         .where(eq(schema.bingoGames.id, id))
         .returning();
 
-      app.logger.info({ gameId: id, completed: updatedGame.completed, bingoCount: updatedGame.bingoCount }, 'Bingo game updated successfully');
+      app.logger.info({ gameId: id, completed: updatedGame.completed, bingoCount: updatedGame.bingoCount, isStarted: updatedGame.isStarted }, 'Bingo game updated successfully');
       return updatedGame;
     } catch (error) {
       app.logger.error({ err: error, gameId: id }, 'Failed to update bingo game');
@@ -411,6 +432,32 @@ export function register(app: App, fastify: FastifyInstance) {
       return { ...game, template };
     } catch (error) {
       app.logger.error({ err: error, gameId: id }, 'Failed to fetch bingo game');
+      throw error;
+    }
+  });
+
+  // DELETE /api/bingo/games/:id - Delete a game
+  fastify.delete('/games/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    app.logger.info({ gameId: id }, 'Deleting bingo game');
+
+    try {
+      const [game] = await app.db
+        .select()
+        .from(schema.bingoGames)
+        .where(eq(schema.bingoGames.id, id));
+
+      if (!game) {
+        app.logger.warn({ gameId: id }, 'Game not found for deletion');
+        return reply.status(404).send({ error: 'Game not found' });
+      }
+
+      await app.db.delete(schema.bingoGames).where(eq(schema.bingoGames.id, id));
+
+      app.logger.info({ gameId: id, templateName: game.templateName }, 'Bingo game deleted successfully');
+      return { success: true, message: 'Game deleted successfully' };
+    } catch (error) {
+      app.logger.error({ err: error, gameId: id }, 'Failed to delete game');
       throw error;
     }
   });
