@@ -1339,21 +1339,23 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {gameNotStarted ? (
-          <TouchableOpacity
-            style={styles.startGameButton}
-            onPress={startGame}
-            activeOpacity={0.7}
-          >
-            <IconSymbol 
-              ios_icon_name="play.fill" 
-              android_material_icon_name="play-arrow"
-              size={24} 
-              color={colors.card} 
-            />
-            <Text style={styles.startGameButtonText}>Start Game</Text>
-          </TouchableOpacity>
-        ) : (
+        <View style={styles.buttonContainer}>
+          {gameNotStarted && (
+            <TouchableOpacity
+              style={styles.startGameButton}
+              onPress={startGame}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="play.fill" 
+                android_material_icon_name="play-arrow"
+                size={24} 
+                color={colors.card} 
+              />
+              <Text style={styles.startGameButtonText}>Start Game</Text>
+            </TouchableOpacity>
+          )}
+          
           <TouchableOpacity
             style={styles.newGameButton}
             onPress={() => {
@@ -1370,9 +1372,9 @@ export default function HomeScreen() {
               size={20} 
               color={colors.card} 
             />
-            <Text style={styles.newGameButtonText}>New Card</Text>
+            <Text style={styles.newGameButtonText}>Create a New Card</Text>
           </TouchableOpacity>
-        )}
+        </View>
       </View>
 
       <Modal
@@ -1648,6 +1650,33 @@ const styles = StyleSheet.create({
     top: 4,
     right: 4,
   },
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
+  startGameButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  startGameButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.card,
+  },
   newGameButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1656,10 +1685,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 12,
     padding: 16,
-    marginTop: 20,
     width: '100%',
-    maxWidth: 500,
-    alignSelf: 'center',
   },
   newGameButtonText: {
     fontSize: 16,
@@ -1808,29 +1834,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '600',
-  },
-  startGameButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    width: '100%',
-    maxWidth: 500,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  startGameButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.card,
   },
   themeOptionsButtons: {
     width: '100%',
