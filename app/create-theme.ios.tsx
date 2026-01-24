@@ -233,6 +233,14 @@ export default function CreateThemeScreen() {
     }
   };
 
+  const handleBackPress = () => {
+    console.log('CreateThemeScreen: Back button pressed');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.back();
+  };
+
   if (loading) {
     const loadingText = 'Loading...';
     return (
@@ -246,8 +254,17 @@ export default function CreateThemeScreen() {
           options={{ 
             headerShown: true,
             title: 'Create Your Own Theme',
-            headerBackTitle: '',
-            headerBackTitleVisible: false,
+            headerBackVisible: false,
+            headerLeft: () => (
+              <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+                <IconSymbol 
+                  ios_icon_name="chevron.left" 
+                  android_material_icon_name="arrow-back"
+                  size={28} 
+                  color={colors.card} 
+                />
+              </TouchableOpacity>
+            ),
             headerStyle: {
               backgroundColor: colors.primary,
             },
@@ -284,8 +301,17 @@ export default function CreateThemeScreen() {
         options={{ 
           headerShown: true,
           title: 'Create Your Own Theme',
-          headerBackTitle: '',
-          headerBackTitleVisible: false,
+          headerBackVisible: false,
+          headerLeft: () => (
+            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+              <IconSymbol 
+                ios_icon_name="chevron.left" 
+                android_material_icon_name="arrow-back"
+                size={28} 
+                color={colors.card} 
+              />
+            </TouchableOpacity>
+          ),
           headerStyle: {
             backgroundColor: colors.primary,
           },
@@ -434,6 +460,10 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: 4,
   },
   loadingContainer: {
     flex: 1,
