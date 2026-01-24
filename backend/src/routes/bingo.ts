@@ -426,12 +426,16 @@ export function register(app: App, fastify: FastifyInstance) {
         return reply.status(404).send({ error: 'Game not found' });
       }
 
-      const [template] = await app.db
-        .select()
-        .from(schema.bingoTemplates)
-        .where(eq(schema.bingoTemplates.id, game.templateId));
+      let template = null;
+      if (game.templateId) {
+        const [t] = await app.db
+          .select()
+          .from(schema.bingoTemplates)
+          .where(eq(schema.bingoTemplates.id, game.templateId));
+        template = t;
+      }
 
-      app.logger.info({ gameId: id, templateId: game.templateId }, 'Successfully fetched bingo game');
+      app.logger.info({ gameId: id, templateId: game.templateId, hasTemplate: !!template }, 'Successfully fetched bingo game');
       return { ...game, template };
     } catch (error) {
       app.logger.error({ err: error, gameId: id }, 'Failed to fetch bingo game');
@@ -550,18 +554,14 @@ export function register(app: App, fastify: FastifyInstance) {
         return reply.status(404).send({ error: 'Game not found' });
       }
 
-      const [template] = await app.db
-        .select()
-        .from(schema.bingoTemplates)
-        .where(eq(schema.bingoTemplates.id, game.templateId));
-
-      if (!template) {
-        app.logger.warn({ gameId, templateId: game.templateId }, 'Template not found for sharing');
-        return reply.status(404).send({ error: 'Template not found' });
+      // Use game's stored items, even if template is deleted
+      if (!game.items || game.items.length === 0) {
+        app.logger.warn({ gameId, templateId: game.templateId }, 'Game has no items for sharing');
+        return reply.status(400).send({ error: 'Game has no items' });
       }
 
       // Generate bingo card as SVG and convert to PNG
-      const svg = generateBingoCardSVG(template.items, game.markedCells);
+      const svg = generateBingoCardSVG(game.items, game.markedCells);
       const pngBuffer = await svgToPng(svg);
 
       // Upload to storage

@@ -12,7 +12,7 @@ export const bingoTemplates = pgTable('bingo_templates', {
 
 export const bingoGames = pgTable('bingo_games', {
   id: uuid('id').primaryKey().defaultRandom(),
-  templateId: uuid('template_id').notNull().references(() => bingoTemplates.id, { onDelete: 'cascade' }),
+  templateId: uuid('template_id').references(() => bingoTemplates.id, { onDelete: 'set null' }),
   templateName: text('template_name').notNull(),
   markedCells: jsonb('marked_cells').$type<number[]>().default([]).notNull(),
   completed: boolean('completed').default(false).notNull(),
