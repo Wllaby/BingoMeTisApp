@@ -252,28 +252,23 @@ export default function CreateThemeScreen() {
         <View style={styles.overlay} />
         <Stack.Screen 
           options={{ 
-            headerShown: true,
-            title: 'Create Your Own Theme',
-            headerBackVisible: false,
-            headerLeft: () => (
-              <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-                <IconSymbol 
-                  ios_icon_name="chevron.left" 
-                  android_material_icon_name="arrow-back"
-                  size={28} 
-                  color={colors.card} 
-                />
-              </TouchableOpacity>
-            ),
-            headerStyle: {
-              backgroundColor: colors.primary,
-            },
-            headerTintColor: colors.card,
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
+            headerShown: false,
           }} 
         />
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+            <IconSymbol 
+              ios_icon_name="chevron.left" 
+              android_material_icon_name="arrow-back"
+              size={24} 
+              color={colors.text} 
+            />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Create Your Own Theme</Text>
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>{loadingText}</Text>
         </View>
@@ -299,28 +294,24 @@ export default function CreateThemeScreen() {
       <View style={styles.overlay} />
       <Stack.Screen 
         options={{ 
-          headerShown: true,
-          title: 'Create Your Own Theme',
-          headerBackVisible: false,
-          headerLeft: () => (
-            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-              <IconSymbol 
-                ios_icon_name="chevron.left" 
-                android_material_icon_name="arrow-back"
-                size={28} 
-                color={colors.card} 
-              />
-            </TouchableOpacity>
-          ),
-          headerStyle: {
-            backgroundColor: colors.primary,
-          },
-          headerTintColor: colors.card,
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          headerShown: false,
         }} 
       />
+      
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <IconSymbol 
+            ios_icon_name="chevron.left" 
+            android_material_icon_name="arrow-back"
+            size={24} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Create Your Own Theme</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
       
       <KeyboardAvoidingView 
         style={styles.keyboardView}
@@ -461,9 +452,35 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
+    paddingBottom: 20,
+  },
   backButton: {
-    padding: 8,
-    marginLeft: 4,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  headerSpacer: {
+    width: 48,
   },
   loadingContainer: {
     flex: 1,
