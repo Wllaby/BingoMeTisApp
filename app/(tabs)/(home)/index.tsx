@@ -85,6 +85,13 @@ const THEME_ORDER = [
   'Self-care'
 ];
 
+// Old theme names that should be filtered out (they were renamed)
+const OLD_THEME_NAMES = [
+  'Spouses Sighs',
+  'Spouses Hearts',
+  'Family gatherings'
+];
+
 function SwipeableCustomTheme({ template, onPress, onDelete, onCopyCode }: SwipeableCustomThemeProps) {
   const translateX = useSharedValue(0);
   const [isRevealed, setIsRevealed] = useState<'left' | 'right' | null>(null);
@@ -1164,11 +1171,20 @@ export default function HomeScreen() {
     const hasCustomTemplates = customTemplates.length > 0;
     const hasActiveGames = activeGames.length > 0;
     
-    // Get standard templates and remove duplicates by name
+    // Get standard templates and filter out old theme names
     const standardTemplates = templates.filter(t => !t.is_custom);
     
+    // Filter out old theme names that were renamed
+    const filteredStandardTemplates = standardTemplates.filter(template => {
+      const isOldTheme = OLD_THEME_NAMES.includes(template.name);
+      if (isOldTheme) {
+        console.log('HomeScreen: Filtering out old theme name:', template.name);
+      }
+      return !isOldTheme;
+    });
+    
     // Deduplicate by name - keep only the first occurrence of each theme name
-    const uniqueStandardTemplates = standardTemplates.reduce((acc: BingoTemplate[], template) => {
+    const uniqueStandardTemplates = filteredStandardTemplates.reduce((acc: BingoTemplate[], template) => {
       const isDuplicate = acc.some(t => t.name === template.name);
       if (!isDuplicate) {
         acc.push(template);
