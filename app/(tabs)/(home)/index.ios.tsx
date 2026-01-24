@@ -1880,7 +1880,6 @@ const styles = StyleSheet.create({
     width: width - 40,
     maxWidth: 500,
     aspectRatio: 1,
-    gap: 4,
   },
   bingoCell: {
     width: (width - 60) / 5,
