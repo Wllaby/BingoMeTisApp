@@ -308,6 +308,8 @@ export default function HomeScreen() {
   const [showFullCardModal, setShowFullCardModal] = useState(false);
   const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [previewItems, setPreviewItems] = useState<string[]>([]);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const customThemeBackgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
@@ -326,8 +328,8 @@ export default function HomeScreen() {
   const shareBackgroundImage = resolveImageSource(require('@/assets/images/4444f386-e9bd-4350-ad73-914cee2f2d3e.webp'));
   
   // Determine background based on current game's theme name and custom status
-  const isCustomTheme = currentGame?.is_custom_theme === true;
-  const themeName = currentGame?.template_name || '';
+  const isCustomTheme = selectedTemplate?.is_custom === true;
+  const themeName = selectedTemplate?.name || '';
   const isKidsTheme = themeName === 'Kids';
   const isThingsKidsDoTheme = themeName === 'Things kids do';
   const isOfficeTheme = themeName === 'Office';
@@ -478,10 +480,44 @@ export default function HomeScreen() {
     return newArray;
   };
 
-  const createNewCard = async (template: BingoTemplate) => {
-    console.log('HomeScreen: Creating new card with template', template.name);
-    console.log('HomeScreen: Template has', template.items.length, 'total options available');
-    console.log('HomeScreen: Template is_custom:', template.is_custom);
+  const generatePreviewCard = (template: BingoTemplate) => {
+    console.log('HomeScreen: Generating preview card for template', template.name);
+    const shuffledItems = shuffleArray([...template.items]);
+    const selectedItems = shuffledItems.slice(0, 24);
+    
+    const gameItems = [
+      ...selectedItems.slice(0, 12),
+      "FREE SPACE",
+      ...selectedItems.slice(12, 24)
+    ];
+    
+    console.log('HomeScreen: Preview card generated with FREE SPACE at center (index 12)');
+    return gameItems;
+  };
+
+  const handleThemePress = (template: BingoTemplate) => {
+    console.log('HomeScreen: Theme pressed', template.name);
+    console.log('HomeScreen: Showing preview card - game not started yet');
+    
+    const previewCard = generatePreviewCard(template);
+    setPreviewItems(previewCard);
+    setSelectedTemplate(template);
+    setGameStarted(false);
+    setCurrentGame(null);
+    setShowTemplateList(false);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  };
+
+  const startGame = async () => {
+    console.log('HomeScreen: Start Game button pressed');
+    
+    if (!selectedTemplate) {
+      console.error('HomeScreen: No template selected');
+      return;
+    }
     
     // Check if user already has 5 active games
     if (activeGames.length >= 5) {
@@ -500,27 +536,15 @@ export default function HomeScreen() {
         return;
       }
 
-      const shuffledItems = shuffleArray([...template.items]);
-      const selectedItems = shuffledItems.slice(0, 24);
-      console.log('HomeScreen: Selected 24 random items from shuffled list');
-      
-      const gameItems = [
-        ...selectedItems.slice(0, 12),
-        "FREE SPACE",
-        ...selectedItems.slice(12, 24)
-      ];
-      
-      console.log('HomeScreen: Bingo card created with FREE SPACE at center (index 12)');
-      
       // Create game in backend
-      console.log('HomeScreen: Creating game in backend with template ID:', template.id);
+      console.log('HomeScreen: Creating game in backend with template ID:', selectedTemplate.id);
       const response = await fetch(`${BACKEND_URL}/games`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          template_id: template.id,
+          template_id: selectedTemplate.id,
         }),
       });
 
@@ -533,34 +557,30 @@ export default function HomeScreen() {
       
       const newGame: BingoGame = {
         id: backendGame.id,
-        template_id: template.id,
-        template_name: template.name,
+        template_id: selectedTemplate.id,
+        template_name: selectedTemplate.name,
         marked_cells: [12],
         completed: false,
-        items: gameItems,
+        items: previewItems,
         bingo_count: 0,
         target_bingo_count: 1,
-        is_custom_theme: template.is_custom,
+        is_custom_theme: selectedTemplate.is_custom,
       };
       
       setCurrentGame(newGame);
-      setSelectedTemplate(template);
-      setShowTemplateList(false);
+      setGameStarted(true);
+      
+      // Reload active games to show the new game in the list
+      await loadActiveGames();
       
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      console.log('HomeScreen: Game card created and ready to play');
+      console.log('HomeScreen: Game started and added to active games list');
     } catch (error) {
-      console.error('HomeScreen: Error creating game', error);
-      Alert.alert('Error', 'Failed to create game. Please try again.');
+      console.error('HomeScreen: Error starting game', error);
+      Alert.alert('Error', 'Failed to start game. Please try again.');
     }
-  };
-
-  const handleThemePress = (template: BingoTemplate) => {
-    console.log('HomeScreen: Theme pressed', template.name);
-    console.log('HomeScreen: Creating new card directly');
-    createNewCard(template);
   };
 
   const resumeGame = (game: BingoGame) => {
@@ -577,6 +597,8 @@ export default function HomeScreen() {
     }
     
     setCurrentGame(game);
+    setGameStarted(true);
+    setPreviewItems(game.items || []);
     setShowTemplateList(false);
     
     if (Platform.OS !== 'web') {
@@ -702,6 +724,11 @@ export default function HomeScreen() {
   };
 
   const toggleCell = async (index: number) => {
+    if (!gameStarted) {
+      console.log('HomeScreen: Cannot toggle cell - game not started yet');
+      return;
+    }
+    
     if (!currentGame) return;
     
     if (index === 12) {
@@ -803,6 +830,33 @@ export default function HomeScreen() {
     }
   };
 
+  const generateNewCard = () => {
+    console.log('HomeScreen: Generate new card button pressed');
+    
+    if (!selectedTemplate) {
+      console.error('HomeScreen: No template selected');
+      return;
+    }
+    
+    const newPreviewCard = generatePreviewCard(selectedTemplate);
+    setPreviewItems(newPreviewCard);
+    
+    // If game was already started, update the current game with new items
+    if (gameStarted && currentGame) {
+      const updatedGame = {
+        ...currentGame,
+        items: newPreviewCard,
+        marked_cells: [12], // Reset to only FREE SPACE marked
+      };
+      setCurrentGame(updatedGame);
+    }
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    console.log('HomeScreen: New card generated');
+  };
+
   const resetGame = () => {
     console.log('HomeScreen: Resetting game');
     setCurrentGame(null);
@@ -811,6 +865,8 @@ export default function HomeScreen() {
     setShowContinueModal(false);
     setShowFullCardModal(false);
     setNextTarget(null);
+    setGameStarted(false);
+    setPreviewItems([]);
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -1005,8 +1061,8 @@ export default function HomeScreen() {
   const handleShareBingoCard = async () => {
     console.log('HomeScreen: Share button tapped - capturing bingo card with branded background');
     
-    if (!shareableCardRef.current || !currentGame) {
-      console.error('HomeScreen: Shareable card ref or current game not available');
+    if (!shareableCardRef.current) {
+      console.error('HomeScreen: Shareable card ref not available');
       Alert.alert('Error', 'Unable to share at this moment. Please try again.');
       return;
     }
@@ -1026,14 +1082,16 @@ export default function HomeScreen() {
 
       console.log('HomeScreen: Screenshot captured successfully, URI:', uri);
 
-      const bingoCount = countBingos(currentGame.marked_cells);
+      const markedCells = gameStarted && currentGame ? currentGame.marked_cells : [12];
+      const bingoCount = countBingos(markedCells);
       const progressText = bingoCount === 0 
         ? 'just started' 
         : bingoCount === 1 
         ? 'got 1 BINGO' 
         : `got ${bingoCount} BINGOs`;
       
-      const shareMessage = `Check out my ${currentGame.template_name} Bingo card! I ${progressText}! 🎉`;
+      const themeName = selectedTemplate?.name || 'Bingo';
+      const shareMessage = `Check out my ${themeName} Bingo card! I ${progressText}! 🎉`;
 
       console.log('HomeScreen: Opening share dialog with message:', shareMessage);
 
@@ -1252,13 +1310,16 @@ export default function HomeScreen() {
     ? 'Congratulations! Would you like to continue to 3 bingos?'
     : 'Amazing! Would you like to continue to fill the entire card?';
   
-  const bannerText = currentGame?.template_name || '';
-  const bannerSubtext = targetText;
+  const bannerText = selectedTemplate?.name || '';
+  const bannerSubtext = gameStarted ? targetText : 'Preview';
   
   const finishGameButtonText = 'No, Finish Game';
   const shareWithOthersButtonText = 'Share with others';
   const fullCardShareButtonText = 'Share with others';
   const fullCardFinishButtonText = 'Finish Game';
+  
+  const displayItems = previewItems;
+  const displayMarkedCells = gameStarted && currentGame ? currentGame.marked_cells : [12];
   
   return (
     <View style={styles.container}>
@@ -1312,8 +1373,8 @@ export default function HomeScreen() {
 
           <View style={styles.cardCenterContainer} ref={bingoCardRef} collapsable={false}>
             <View style={styles.bingoGrid}>
-              {currentGame?.items?.slice(0, 25).map((item, index) => {
-                const isMarked = currentGame.marked_cells.includes(index);
+              {displayItems.slice(0, 25).map((item, index) => {
+                const isMarked = displayMarkedCells.includes(index);
                 const isFreeSpace = index === 12;
                 const cellKey = index;
                 
@@ -1323,10 +1384,12 @@ export default function HomeScreen() {
                     style={[
                       styles.bingoCell,
                       isMarked && styles.bingoCellMarked,
-                      isFreeSpace && styles.bingoCellFree
+                      isFreeSpace && styles.bingoCellFree,
+                      !gameStarted && styles.bingoCellDisabled
                     ]}
                     onPress={() => toggleCell(index)}
-                    activeOpacity={0.7}
+                    activeOpacity={gameStarted ? 0.7 : 1}
+                    disabled={!gameStarted}
                   >
                     {isFreeSpace ? (
                       <View style={styles.freeSpaceContent}>
@@ -1361,14 +1424,25 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.buttonContainer}>
+            {!gameStarted && (
+              <TouchableOpacity
+                style={styles.startGameButton}
+                onPress={startGame}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="play.circle.fill" 
+                  android_material_icon_name="play-circle-filled"
+                  size={20} 
+                  color={colors.card} 
+                />
+                <Text style={styles.startGameButtonText}>Start Game</Text>
+              </TouchableOpacity>
+            )}
+            
             <TouchableOpacity
               style={styles.newGameButton}
-              onPress={() => {
-                console.log('HomeScreen: Create new card button tapped - generating new random card');
-                if (selectedTemplate) {
-                  createNewCard(selectedTemplate);
-                }
-              }}
+              onPress={generateNewCard}
               activeOpacity={0.7}
             >
               <IconSymbol 
@@ -1392,8 +1466,8 @@ export default function HomeScreen() {
             >
               <View style={styles.shareableContent}>
                 <View style={styles.bingoGrid}>
-                  {currentGame?.items?.slice(0, 25).map((item, index) => {
-                    const isMarked = currentGame.marked_cells.includes(index);
+                  {displayItems.slice(0, 25).map((item, index) => {
+                    const isMarked = displayMarkedCells.includes(index);
                     const isFreeSpace = index === 12;
                     const cellKey = `share-${index}`;
                     
@@ -1768,6 +1842,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.highlight,
     borderColor: colors.highlight,
   },
+  bingoCellDisabled: {
+    opacity: 0.8,
+  },
   shareableBingoCell: {
     width: (width - 60) / 5,
     height: (width - 60) / 5,
@@ -1818,6 +1895,21 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 20,
     gap: 12,
+  },
+  startGameButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.accent,
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+  },
+  startGameButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.card,
   },
   newGameButton: {
     flexDirection: 'row',
