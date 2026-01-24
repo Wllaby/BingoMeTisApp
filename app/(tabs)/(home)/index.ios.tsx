@@ -304,6 +304,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [showTemplateList, setShowTemplateList] = useState(true);
   const [showContinueModal, setShowContinueModal] = useState(false);
+  const [showFullCardModal, setShowFullCardModal] = useState(false);
   const [nextTarget, setNextTarget] = useState<'3-bingos' | 'full-card' | null>(null);
   const [isSharing, setIsSharing] = useState(false);
 
@@ -682,6 +683,17 @@ export default function HomeScreen() {
     }
   };
 
+  const handleShareFromModal = async () => {
+    console.log('HomeScreen: Share from modal tapped');
+    await handleShareBingoCard();
+  };
+
+  const handleFullCardFinish = async () => {
+    console.log('HomeScreen: Full card finish button tapped');
+    setShowFullCardModal(false);
+    resetGame();
+  };
+
   const toggleCell = async (index: number) => {
     if (!currentGame) return;
     
@@ -757,19 +769,7 @@ export default function HomeScreen() {
       
       await saveGameToHistory(updatedGame, 25);
       
-      Alert.alert(
-        '🎊 CONGRATULATIONS! 🎊',
-        'You completed the entire card! Your game has been saved to history.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              console.log('HomeScreen: Full card celebration complete');
-              resetGame();
-            }
-          }
-        ]
-      );
+      setShowFullCardModal(true);
     }
     
     // Save game progress to backend
@@ -802,6 +802,7 @@ export default function HomeScreen() {
     setSelectedTemplate(null);
     setShowTemplateList(true);
     setShowContinueModal(false);
+    setShowFullCardModal(false);
     setNextTarget(null);
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -1247,6 +1248,11 @@ export default function HomeScreen() {
   const bannerText = currentGame?.template_name || '';
   const bannerSubtext = targetText;
   
+  const finishGameButtonText = 'No, Finish Game';
+  const shareWithOthersButtonText = 'Share with others';
+  const fullCardShareButtonText = 'Share with others';
+  const fullCardFinishButtonText = 'Finish Game';
+  
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -1428,6 +1434,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Modal for first bingo and 3 bingos */}
         <Modal
           visible={showContinueModal}
           transparent={true}
@@ -1439,13 +1446,21 @@ export default function HomeScreen() {
               <Text style={styles.modalTitle}>{continueModalTitle}</Text>
               <Text style={styles.modalMessage}>{continueModalMessage}</Text>
               
-              <View style={styles.modalButtons}>
+              <View style={styles.modalButtonsThreeButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonSecondary]}
                   onPress={() => handleContinueResponse(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.modalButtonTextSecondary}>No, Save Game</Text>
+                  <Text style={styles.modalButtonTextSecondary}>{finishGameButtonText}</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonShare]}
+                  onPress={handleShareFromModal}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonTextShare}>{shareWithOthersButtonText}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
@@ -1454,6 +1469,39 @@ export default function HomeScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.modalButtonTextPrimary}>Yes, Continue!</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal for full card completion */}
+        <Modal
+          visible={showFullCardModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowFullCardModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>🎊 CONGRATULATIONS! 🎊</Text>
+              <Text style={styles.modalMessage}>You completed the entire card! Your game has been saved to history.</Text>
+              
+              <View style={styles.modalButtonsTwoButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonShare]}
+                  onPress={handleShareFromModal}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonTextShare}>{fullCardShareButtonText}</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary]}
+                  onPress={handleFullCardFinish}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonTextPrimary}>{fullCardFinishButtonText}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1812,12 +1860,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 24,
   },
-  modalButtons: {
-    flexDirection: 'row',
+  modalButtonsThreeButtons: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  modalButtonsTwoButtons: {
+    flexDirection: 'column',
     gap: 12,
   },
   modalButton: {
-    flex: 1,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -1832,12 +1883,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.cardBorder,
   },
+  modalButtonShare: {
+    backgroundColor: colors.accent,
+  },
   modalButtonTextPrimary: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.card,
   },
   modalButtonTextSecondary: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  modalButtonTextShare: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
