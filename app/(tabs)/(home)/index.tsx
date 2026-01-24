@@ -72,6 +72,19 @@ interface SwipeableActiveGameProps {
   onDelete: () => void;
 }
 
+// Define the desired order of standard themes
+const THEME_ORDER = [
+  'Office',
+  'Customer Service',
+  'Dating',
+  'Spouses & Hearts',
+  'Spouses & Headaches',
+  'Kids',
+  'Teenangsters',
+  'Family Gatherings',
+  'Self-care'
+];
+
 function SwipeableCustomTheme({ template, onPress, onDelete, onCopyCode }: SwipeableCustomThemeProps) {
   const translateX = useSharedValue(0);
   const [isRevealed, setIsRevealed] = useState<'left' | 'right' | null>(null);
@@ -334,10 +347,10 @@ export default function HomeScreen() {
   const isThingsKidsDoTheme = themeName === 'Things kids do';
   const isOfficeTheme = themeName === 'Office';
   const isCustomerServiceTheme = themeName === 'Customer Service';
-  const isSpousesSighsTheme = themeName === 'Spouses Sighs';
-  const isSpousesHeartsTheme = themeName === 'Spouses Hearts';
+  const isSpousesSighsTheme = themeName === 'Spouses & Headaches';
+  const isSpousesHeartsTheme = themeName === 'Spouses & Hearts';
   const isDatingTheme = themeName === 'Dating';
-  const isFamilyGatheringsTheme = themeName === 'Family gatherings';
+  const isFamilyGatheringsTheme = themeName === 'Family Gatherings';
   const isSelfCareTheme = themeName === 'Self-care';
   const isTeenAngstersTheme = themeName === 'Teenangsters';
   
@@ -1128,9 +1141,8 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         
-        {/* Top Banner */}
+        {/* Top Banner - Removed title text */}
         <View style={styles.topBanner}>
-          <Text style={styles.bannerText}>Bingo MeTis</Text>
         </View>
         
         <ImageBackground 
@@ -1151,15 +1163,31 @@ export default function HomeScreen() {
     const customTemplates = templates.filter(t => t.is_custom);
     const hasCustomTemplates = customTemplates.length > 0;
     const hasActiveGames = activeGames.length > 0;
-    const bannerText = 'Bingo MeTis';
+    
+    // Get standard templates and sort them according to THEME_ORDER
+    const standardTemplates = templates.filter(t => !t.is_custom);
+    const sortedStandardTemplates = standardTemplates.sort((a, b) => {
+      const indexA = THEME_ORDER.indexOf(a.name);
+      const indexB = THEME_ORDER.indexOf(b.name);
+      
+      // If both are in the order array, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      // If only a is in the order array, it comes first
+      if (indexA !== -1) return -1;
+      // If only b is in the order array, it comes first
+      if (indexB !== -1) return 1;
+      // If neither is in the order array, maintain original order
+      return 0;
+    });
     
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         
-        {/* Top Banner */}
+        {/* Top Banner - Removed title text */}
         <View style={styles.topBanner}>
-          <Text style={styles.bannerText}>{bannerText}</Text>
         </View>
         
         <ImageBackground 
@@ -1177,7 +1205,7 @@ export default function HomeScreen() {
               <Text style={styles.headerSubtitle}>Choose a theme to start playing</Text>
             </View>
 
-            {templates.filter(t => !t.is_custom).map((template) => {
+            {sortedStandardTemplates.map((template) => {
               const templateKey = template.id;
               return (
                 <TouchableOpacity
@@ -1600,10 +1628,10 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   topBanner: {
-    backgroundColor: 'transparent',
-    paddingVertical: 16,
+    backgroundColor: '#3D5A80',
+    paddingVertical: 8,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 16,
+    paddingTop: Platform.OS === 'ios' ? 60 : 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1665,8 +1693,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   headerSubtitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },

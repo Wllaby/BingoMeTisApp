@@ -2,17 +2,17 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#20B2AA',      // Turquoise (changed from red)
-  secondary: '#4ECDC4',    // Teal accent
-  accent: '#FFE66D',       // Yellow highlight
+  primary: '#4A90E2',      // Blue (changed from turquoise to match character's blue hair)
+  secondary: '#5BA3F5',    // Lighter blue accent
+  accent: '#20B2AA',       // Turquoise (changed from yellow)
   background: '#FFFFFF',   // Light background
   backgroundAlt: '#F7F7F7', // Slightly darker background
   text: '#2C3E50',         // Dark text
   textSecondary: '#7F8C8D', // Gray text
   card: '#FFFFFF',         // White cards
   cardBorder: '#E0E0E0',   // Light border
-  marked: '#4ECDC4',       // Teal for marked cells
-  bingo: '#20B2AA',        // Turquoise for bingo win (changed from red)
+  marked: '#5BA3F5',       // Blue for marked cells
+  bingo: '#4A90E2',        // Blue for bingo win
   highlight: '#FFE66D',    // Yellow highlight
   error: '#E74C3C',        // Red for errors
 };
