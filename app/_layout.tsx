@@ -95,6 +95,43 @@ export default function RootLayout() {
                   headerBackTitle: ''
                 }} 
               />
+              
+              {/* Modal screens outside tabs */}
+              <Stack.Screen 
+                name="create-theme" 
+                options={{ 
+                  headerShown: false,
+                  headerBackTitle: '',
+                  presentation: 'card'
+                }} 
+              />
+              
+              <Stack.Screen 
+                name="join-game" 
+                options={{ 
+                  headerShown: false,
+                  headerBackTitle: '',
+                  presentation: 'card'
+                }} 
+              />
+              
+              <Stack.Screen 
+                name="history" 
+                options={{ 
+                  headerShown: false,
+                  headerBackTitle: '',
+                  presentation: 'card'
+                }} 
+              />
+              
+              <Stack.Screen 
+                name="admin-upload" 
+                options={{ 
+                  headerShown: false,
+                  headerBackTitle: '',
+                  presentation: 'card'
+                }} 
+              />
             </Stack>
             <SystemBars style={"auto"} />
             </GestureHandlerRootView>
