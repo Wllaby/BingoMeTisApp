@@ -246,6 +246,7 @@ export default function CreateThemeScreen() {
           options={{ 
             headerShown: true,
             title: 'Create Your Own Theme',
+            headerBackTitle: '',
             headerStyle: {
               backgroundColor: colors.primary,
             },
@@ -282,6 +283,7 @@ export default function CreateThemeScreen() {
         options={{ 
           headerShown: true,
           title: 'Create Your Own Theme',
+          headerBackTitle: '',
           headerStyle: {
             backgroundColor: colors.primary,
           },
