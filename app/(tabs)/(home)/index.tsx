@@ -1141,7 +1141,7 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         
-        {/* Top Banner - Removed title text */}
+        {/* Top Banner */}
         <View style={styles.topBanner}>
         </View>
         
@@ -1186,7 +1186,7 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         
-        {/* Top Banner - Removed title text */}
+        {/* Top Banner */}
         <View style={styles.topBanner}>
         </View>
         
@@ -1288,7 +1288,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.joinButton}
               onPress={() => {
-                console.log('HomeScreen: Add/Join a game with a code tapped');
+                console.log('HomeScreen: Add a theme with a code tapped');
                 router.push('/join-game');
               }}
               activeOpacity={0.7}
@@ -1299,7 +1299,7 @@ export default function HomeScreen() {
                 size={24} 
                 color={colors.primary} 
               />
-              <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
+              <Text style={styles.joinButtonText}>Add a theme with a code</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1462,7 +1462,7 @@ export default function HomeScreen() {
                   ios_icon_name="play.circle.fill" 
                   android_material_icon_name="play-circle-filled"
                   size={20} 
-                  color={colors.card} 
+                  color="#FFFFFF" 
                 />
                 <Text style={styles.startGameButtonText}>Start Game</Text>
               </TouchableOpacity>
@@ -1628,7 +1628,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   topBanner: {
-    backgroundColor: '#3D5A80',
+    backgroundColor: '#4A4A4A',
     paddingVertical: 8,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 8,
@@ -1690,7 +1690,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 30,
-    marginTop: 20,
+    marginTop: 100,
   },
   headerSubtitle: {
     fontSize: 22,
@@ -1749,7 +1749,7 @@ const styles = StyleSheet.create({
   customBadgeText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
   },
   templateDescription: {
     fontSize: 14,
@@ -1937,7 +1937,7 @@ const styles = StyleSheet.create({
   startGameButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.card,
+    color: '#FFFFFF',
   },
   newGameButton: {
     flexDirection: 'row',
@@ -2026,7 +2026,7 @@ const styles = StyleSheet.create({
   modalButtonTextShare: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#FFFFFF',
   },
   swipeableContainer: {
     position: 'relative',

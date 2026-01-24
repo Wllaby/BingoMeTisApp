@@ -2,7 +2,7 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#4A90E2',      // Blue (changed from turquoise to match character's blue hair)
+  primary: '#2E5C8A',      // Darker blue (changed from #4A90E2 to be less bright)
   secondary: '#5BA3F5',    // Lighter blue accent
   accent: '#20B2AA',       // Turquoise (changed from yellow)
   background: '#FFFFFF',   // Light background
