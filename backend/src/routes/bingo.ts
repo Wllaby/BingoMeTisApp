@@ -104,8 +104,24 @@ export function register(app: App, fastify: FastifyInstance) {
   fastify.get('/templates', async (request, reply) => {
     app.logger.info({}, 'Fetching all bingo templates');
     try {
-      const templates = await app.db.select().from(schema.bingoTemplates);
-      app.logger.info({ count: templates.length }, 'Successfully fetched bingo templates');
+      const allTemplates = await app.db.select().from(schema.bingoTemplates);
+
+      // Separate custom and standard templates
+      const customTemplates = allTemplates.filter(t => t.isCustom);
+      const standardTemplates = allTemplates.filter(t => !t.isCustom);
+
+      // Deduplicate standard themes by name, keeping the oldest (earliest createdAt)
+      const deduplicatedStandard = new Map<string, typeof standardTemplates[0]>();
+      for (const template of standardTemplates.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
+        if (!deduplicatedStandard.has(template.name)) {
+          deduplicatedStandard.set(template.name, template);
+        }
+      }
+
+      // Combine deduplicated standard themes with all custom themes
+      const templates = [...Array.from(deduplicatedStandard.values()), ...customTemplates];
+
+      app.logger.info({ totalCount: templates.length, standardCount: deduplicatedStandard.size, customCount: customTemplates.length }, 'Successfully fetched and deduplicated bingo templates');
       return { templates };
     } catch (error) {
       app.logger.error({ err: error }, 'Failed to fetch bingo templates');
