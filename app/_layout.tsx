@@ -1,3 +1,4 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -87,7 +88,13 @@ export default function RootLayout() {
             <GestureHandlerRootView>
             <Stack>
               {/* Main app with tabs */}
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen 
+                name="(tabs)" 
+                options={{ 
+                  headerShown: false,
+                  headerBackTitle: ''
+                }} 
+              />
             </Stack>
             <SystemBars style={"auto"} />
             </GestureHandlerRootView>
