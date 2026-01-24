@@ -81,12 +81,12 @@ export default function JoinGameScreen() {
   };
 
   const handleJoinGame = async () => {
-    console.log('JoinGameScreen: Join game tapped with code:', gameCode);
+    console.log('JoinGameScreen: Add theme tapped with code:', gameCode);
     
     Keyboard.dismiss();
     
     if (!gameCode.trim()) {
-      Alert.alert('Error', 'Please enter a game code');
+      Alert.alert('Error', 'Please enter a theme code');
       return;
     }
 
@@ -126,7 +126,7 @@ export default function JoinGameScreen() {
 
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error('Game code not found. Please check the code and try again.');
+          throw new Error('Theme code not found. Please check the code and try again.');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -136,7 +136,7 @@ export default function JoinGameScreen() {
       
       Alert.alert(
         'Success!',
-        `You've joined the "${template.name}" theme! The template has been added to your list.`,
+        `You've added the "${template.name}" theme! The template has been added to your list.`,
         [
           {
             text: 'OK',
@@ -150,15 +150,22 @@ export default function JoinGameScreen() {
       
       setLoading(false);
     } catch (error) {
-      console.error('JoinGameScreen: Error joining game', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to join game. Please check the code and try again.';
+      console.error('JoinGameScreen: Error adding theme', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add theme. Please check the code and try again.';
       Alert.alert('Error', errorMessage);
       setLoading(false);
     }
   };
 
+  const handleBackPress = () => {
+    console.log('JoinGameScreen: Back button pressed');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.back();
+  };
+
   const codeUppercase = gameCode.toUpperCase();
-  const limitWarningText = `${customThemeCount}/${MAX_CUSTOM_THEMES} custom themes`;
   const isAtLimit = customThemeCount >= MAX_CUSTOM_THEMES;
 
   return (
@@ -170,13 +177,24 @@ export default function JoinGameScreen() {
       <View style={styles.overlay} />
       <Stack.Screen 
         options={{ 
-          headerShown: true,
-          title: 'Join Game',
-          headerBackTitle: 'Back',
-          headerTransparent: true,
-          headerTintColor: '#FFFFFF',
+          headerShown: false,
         }} 
       />
+      
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <IconSymbol 
+            ios_icon_name="chevron.left" 
+            android_material_icon_name="arrow-back"
+            size={24} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Add Theme</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
       
       <KeyboardAvoidingView 
         style={styles.keyboardAvoidingView}
@@ -199,21 +217,13 @@ export default function JoinGameScreen() {
                 />
               </View>
 
-              <Text style={styles.title}>Join a Game</Text>
-              <Text style={styles.subtitle}>Enter the game code shared with you</Text>
-
-              {!checkingLimit && (
-                <View style={[styles.limitBadge, isAtLimit && styles.limitBadgeWarning]}>
-                  <Text style={[styles.limitBadgeText, isAtLimit && styles.limitBadgeTextWarning]}>
-                    {limitWarningText}
-                  </Text>
-                </View>
-              )}
+              <Text style={styles.title}>Add a theme</Text>
+              <Text style={styles.subtitle}>Enter the theme code shared with you</Text>
 
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter game code"
+                  placeholder="Enter theme code"
                   placeholderTextColor="rgba(0, 0, 0, 0.4)"
                   value={gameCode}
                   onChangeText={setGameCode}
@@ -245,7 +255,7 @@ export default function JoinGameScreen() {
                   color={colors.card} 
                 />
                 <Text style={styles.joinButtonText}>
-                  {loading ? 'Joining...' : 'Join Game'}
+                  {loading ? 'Adding...' : 'Add Theme'}
                 </Text>
               </TouchableOpacity>
 
@@ -271,7 +281,7 @@ export default function JoinGameScreen() {
                   color={colors.primary} 
                 />
                 <Text style={styles.infoText}>
-                  Game codes are unique identifiers for custom created themes that can be shared with others.
+                  Theme codes are unique identifiers for custom created themes that can be shared with others.
                 </Text>
               </View>
             </View>
@@ -290,6 +300,36 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  headerSpacer: {
+    width: 48,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -321,29 +361,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#FFFFFF',
-    marginBottom: 20,
+    marginBottom: 30,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
-  },
-  limitBadge: {
-    backgroundColor: 'rgba(76, 175, 80, 0.9)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  limitBadgeWarning: {
-    backgroundColor: 'rgba(255, 152, 0, 0.9)',
-  },
-  limitBadgeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  limitBadgeTextWarning: {
-    color: '#FFFFFF',
   },
   inputContainer: {
     width: '100%',
