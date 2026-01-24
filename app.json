@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Bingo MeTis",
@@ -42,7 +43,7 @@
     },
     "extra": {
       "router": {},
-      "backendUrl": "https://yzkepwhqsdynm8w2kch3pff68s4jkujd.app.specular.dev"
+      "backendUrl": "http://localhost:8082"
     }
   },
   "scheme": "Bingo MeTis"
