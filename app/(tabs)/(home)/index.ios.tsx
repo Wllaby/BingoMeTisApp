@@ -56,6 +56,7 @@ interface BingoGame {
   items?: string[];
   bingo_count: number;
   target_bingo_count: number;
+  is_custom_theme?: boolean;
 }
 
 interface SwipeableCustomThemeProps {
@@ -324,17 +325,19 @@ export default function HomeScreen() {
   // Fixed background image for sharing
   const shareBackgroundImage = resolveImageSource(require('@/assets/images/4444f386-e9bd-4350-ad73-914cee2f2d3e.webp'));
   
-  const isCustomTheme = selectedTemplate?.is_custom === true;
-  const isKidsTheme = selectedTemplate?.name === 'Kids';
-  const isThingsKidsDoTheme = selectedTemplate?.name === 'Things kids do';
-  const isOfficeTheme = selectedTemplate?.name === 'Office';
-  const isCustomerServiceTheme = selectedTemplate?.name === 'Customer Service';
-  const isSpousesSighsTheme = selectedTemplate?.name === 'Spouses Sighs';
-  const isSpousesHeartsTheme = selectedTemplate?.name === 'Spouses Hearts';
-  const isDatingTheme = selectedTemplate?.name === 'Dating';
-  const isFamilyGatheringsTheme = selectedTemplate?.name === 'Family gatherings';
-  const isSelfCareTheme = selectedTemplate?.name === 'Self-care';
-  const isTeenAngstersTheme = selectedTemplate?.name === 'Teenangsters';
+  // Determine background based on current game's theme name and custom status
+  const isCustomTheme = currentGame?.is_custom_theme === true;
+  const themeName = currentGame?.template_name || '';
+  const isKidsTheme = themeName === 'Kids';
+  const isThingsKidsDoTheme = themeName === 'Things kids do';
+  const isOfficeTheme = themeName === 'Office';
+  const isCustomerServiceTheme = themeName === 'Customer Service';
+  const isSpousesSighsTheme = themeName === 'Spouses Sighs';
+  const isSpousesHeartsTheme = themeName === 'Spouses Hearts';
+  const isDatingTheme = themeName === 'Dating';
+  const isFamilyGatheringsTheme = themeName === 'Family gatherings';
+  const isSelfCareTheme = themeName === 'Self-care';
+  const isTeenAngstersTheme = themeName === 'Teenangsters';
   
   const backgroundImage = isCustomTheme 
     ? customThemeBackgroundImage 
@@ -455,6 +458,7 @@ export default function HomeScreen() {
         items: game.items,
         bingo_count: game.bingoCount || game.bingo_count || 0,
         target_bingo_count: 1,
+        is_custom_theme: game.isCustomTheme || game.is_custom_theme || false,
       }));
       
       setActiveGames(transformedGames);
@@ -536,6 +540,7 @@ export default function HomeScreen() {
         items: gameItems,
         bingo_count: 0,
         target_bingo_count: 1,
+        is_custom_theme: template.is_custom,
       };
       
       setCurrentGame(newGame);
@@ -560,13 +565,15 @@ export default function HomeScreen() {
 
   const resumeGame = (game: BingoGame) => {
     console.log('HomeScreen: Resuming game', game.id, game.template_name);
+    console.log('HomeScreen: Game is_custom_theme:', game.is_custom_theme);
     
     const template = templates.find(t => t.id === game.template_id);
     if (template) {
       console.log('HomeScreen: Found template for game, is_custom:', template.is_custom);
       setSelectedTemplate(template);
     } else {
-      console.log('HomeScreen: Template not found for game, template_id:', game.template_id);
+      console.log('HomeScreen: Template not found for game, using game data for background');
+      setSelectedTemplate(null);
     }
     
     setCurrentGame(game);
@@ -1069,7 +1076,7 @@ export default function HomeScreen() {
         </View>
         
         <ImageBackground 
-          source={customThemeBackgroundImage} 
+          source={defaultBackgroundImage} 
           style={styles.backgroundSection}
           resizeMode="cover"
         >
