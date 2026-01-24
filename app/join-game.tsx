@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,8 +21,8 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 
-// Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+const MAX_CUSTOM_THEMES = 5;
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -36,17 +36,67 @@ export default function JoinGameScreen() {
   const router = useRouter();
   const [gameCode, setGameCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [customThemeCount, setCustomThemeCount] = useState(0);
+  const [checkingLimit, setCheckingLimit] = useState(true);
 
   const backgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
+
+  useEffect(() => {
+    console.log('JoinGameScreen: Checking custom theme count');
+    checkCustomThemeCount();
+  }, []);
+
+  const checkCustomThemeCount = async () => {
+    try {
+      if (!BACKEND_URL) {
+        console.error('JoinGameScreen: BACKEND_URL is not configured');
+        setCheckingLimit(false);
+        return;
+      }
+
+      console.log('JoinGameScreen: Fetching templates to count custom themes');
+      const response = await fetch(`${BACKEND_URL}/templates`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
+      
+      const customCount = templatesArray.filter((t: any) => t.isCustom || t.is_custom).length;
+      console.log('JoinGameScreen: Current custom theme count:', customCount);
+      
+      setCustomThemeCount(customCount);
+      setCheckingLimit(false);
+    } catch (error) {
+      console.error('JoinGameScreen: Error checking custom theme count', error);
+      setCheckingLimit(false);
+    }
+  };
 
   const handleJoinGame = async () => {
     console.log('JoinGameScreen: Join game tapped with code:', gameCode);
     
-    // Dismiss keyboard before processing
     Keyboard.dismiss();
     
     if (!gameCode.trim()) {
       Alert.alert('Error', 'Please enter a game code');
+      return;
+    }
+
+    if (customThemeCount >= MAX_CUSTOM_THEMES) {
+      console.log('JoinGameScreen: Cannot add theme - maximum custom themes reached');
+      Alert.alert(
+        'Maximum Custom Themes Reached',
+        `You can only have ${MAX_CUSTOM_THEMES} custom themes at the same time. Please delete one of your existing custom themes to add a new one.`,
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -67,7 +117,6 @@ export default function JoinGameScreen() {
         return;
       }
 
-      // Fetch template by code using GET /templates/code/{code}
       const response = await fetch(`${BACKEND_URL}/templates/code/${gameCode.trim().toUpperCase()}`, {
         method: 'GET',
         headers: {
@@ -85,7 +134,6 @@ export default function JoinGameScreen() {
       const template = await response.json();
       console.log('JoinGameScreen: Template fetched successfully:', template.name);
       
-      // Show success message and navigate back to home
       Alert.alert(
         'Success!',
         `You've joined the "${template.name}" theme! The template has been added to your list.`,
@@ -110,6 +158,8 @@ export default function JoinGameScreen() {
   };
 
   const codeUppercase = gameCode.toUpperCase();
+  const limitWarningText = `${customThemeCount}/${MAX_CUSTOM_THEMES} custom themes`;
+  const isAtLimit = customThemeCount >= MAX_CUSTOM_THEMES;
 
   return (
     <ImageBackground 
@@ -152,6 +202,14 @@ export default function JoinGameScreen() {
               <Text style={styles.title}>Join a Game</Text>
               <Text style={styles.subtitle}>Enter the game code shared with you</Text>
 
+              {!checkingLimit && (
+                <View style={[styles.limitBadge, isAtLimit && styles.limitBadgeWarning]}>
+                  <Text style={[styles.limitBadgeText, isAtLimit && styles.limitBadgeTextWarning]}>
+                    {limitWarningText}
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.input}
@@ -175,9 +233,9 @@ export default function JoinGameScreen() {
               )}
 
               <TouchableOpacity
-                style={[styles.joinButton, loading && styles.joinButtonDisabled]}
+                style={[styles.joinButton, (loading || isAtLimit) && styles.joinButtonDisabled]}
                 onPress={handleJoinGame}
-                disabled={loading}
+                disabled={loading || isAtLimit}
                 activeOpacity={0.7}
               >
                 <IconSymbol 
@@ -190,6 +248,20 @@ export default function JoinGameScreen() {
                   {loading ? 'Joining...' : 'Join Game'}
                 </Text>
               </TouchableOpacity>
+
+              {isAtLimit && (
+                <View style={styles.warningBox}>
+                  <IconSymbol 
+                    ios_icon_name="exclamationmark.triangle.fill" 
+                    android_material_icon_name="warning"
+                    size={20} 
+                    color="#FF9800" 
+                  />
+                  <Text style={styles.warningText}>
+                    You have reached the maximum of {MAX_CUSTOM_THEMES} custom themes. Delete one to add a new theme.
+                  </Text>
+                </View>
+              )}
 
               <View style={styles.infoBox}>
                 <IconSymbol 
@@ -249,11 +321,29 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#FFFFFF',
-    marginBottom: 40,
+    marginBottom: 20,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
+  },
+  limitBadge: {
+    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  limitBadgeWarning: {
+    backgroundColor: 'rgba(255, 152, 0, 0.9)',
+  },
+  limitBadgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  limitBadgeTextWarning: {
+    color: '#FFFFFF',
   },
   inputContainer: {
     width: '100%',
@@ -302,7 +392,7 @@ const styles = StyleSheet.create({
     padding: 18,
     width: '100%',
     maxWidth: 400,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   joinButtonDisabled: {
     opacity: 0.6,
@@ -311,6 +401,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.card,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+    maxWidth: 400,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 152, 0, 0.5)',
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+    fontWeight: '600',
   },
   infoBox: {
     flexDirection: 'row',

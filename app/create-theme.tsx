@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+const MAX_CUSTOM_THEMES = 5;
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -36,8 +37,66 @@ export default function CreateThemeScreen() {
   const [options, setOptions] = useState<string[]>([]);
   const [currentOption, setCurrentOption] = useState('');
   const [saving, setSaving] = useState(false);
+  const [customThemeCount, setCustomThemeCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const backgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
+
+  useEffect(() => {
+    console.log('CreateThemeScreen: Checking custom theme count');
+    checkCustomThemeCount();
+  }, []);
+
+  const checkCustomThemeCount = async () => {
+    try {
+      if (!BACKEND_URL) {
+        console.error('CreateThemeScreen: BACKEND_URL is not configured');
+        setLoading(false);
+        return;
+      }
+
+      console.log('CreateThemeScreen: Fetching templates to count custom themes');
+      const response = await fetch(`${BACKEND_URL}/templates`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
+      
+      const customCount = templatesArray.filter((t: any) => t.isCustom || t.is_custom).length;
+      console.log('CreateThemeScreen: Current custom theme count:', customCount);
+      
+      setCustomThemeCount(customCount);
+      setLoading(false);
+
+      if (customCount >= MAX_CUSTOM_THEMES) {
+        console.log('CreateThemeScreen: User has reached maximum custom themes');
+        Alert.alert(
+          'Maximum Custom Themes Reached',
+          `You can only have ${MAX_CUSTOM_THEMES} custom themes at the same time. Please delete one of your existing custom themes to create a new one.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                console.log('CreateThemeScreen: Navigating back due to limit');
+                router.back();
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('CreateThemeScreen: Error checking custom theme count', error);
+      setLoading(false);
+    }
+  };
 
   const addOption = () => {
     console.log('CreateThemeScreen: Adding option:', currentOption);
@@ -84,6 +143,16 @@ export default function CreateThemeScreen() {
     console.log('CreateThemeScreen: Save button tapped');
     console.log('CreateThemeScreen: Theme name:', themeName);
     console.log('CreateThemeScreen: Total options:', options.length);
+    
+    if (customThemeCount >= MAX_CUSTOM_THEMES) {
+      console.log('CreateThemeScreen: Cannot save - maximum custom themes reached');
+      Alert.alert(
+        'Maximum Custom Themes Reached',
+        `You can only have ${MAX_CUSTOM_THEMES} custom themes at the same time. Please delete one of your existing custom themes to create a new one.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     
     const trimmedName = themeName.trim();
     
@@ -163,6 +232,39 @@ export default function CreateThemeScreen() {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    const loadingText = 'Loading...';
+    return (
+      <ImageBackground 
+        source={backgroundImage} 
+        style={styles.container}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
+        <Stack.Screen 
+          options={{ 
+            headerShown: true,
+            title: 'Create Your Own Theme',
+            headerStyle: {
+              backgroundColor: colors.primary,
+            },
+            headerTintColor: colors.card,
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }} 
+        />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>{loadingText}</Text>
+        </View>
+      </ImageBackground>
+    );
+  }
+
+  if (customThemeCount >= MAX_CUSTOM_THEMES) {
+    return null;
+  }
 
   const optionsCountText = options.length.toString();
   const minText = '25';
@@ -328,6 +430,16 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   keyboardView: {
     flex: 1,
