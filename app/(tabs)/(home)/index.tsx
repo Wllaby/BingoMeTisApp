@@ -1207,6 +1207,23 @@ export default function HomeScreen() {
               />
               <Text style={styles.joinButtonText}>Add/Join a game with a code</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.historyButton}
+              onPress={() => {
+                console.log('HomeScreen: Game History button tapped');
+                router.push('/history');
+              }}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="clock.fill" 
+                android_material_icon_name="history"
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={styles.historyButtonText}>Game History</Text>
+            </TouchableOpacity>
           </ScrollView>
         </ImageBackground>
       </View>
@@ -1496,12 +1513,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   gameContainer: {
     flex: 1,
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   cardCenterContainer: {
     flex: 1,
@@ -1622,6 +1639,23 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   joinButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  historyButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
