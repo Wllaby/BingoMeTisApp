@@ -1164,9 +1164,22 @@ export default function HomeScreen() {
     const hasCustomTemplates = customTemplates.length > 0;
     const hasActiveGames = activeGames.length > 0;
     
-    // Get standard templates and sort them according to THEME_ORDER
+    // Get standard templates and remove duplicates by name
     const standardTemplates = templates.filter(t => !t.is_custom);
-    const sortedStandardTemplates = standardTemplates.sort((a, b) => {
+    
+    // Deduplicate by name - keep only the first occurrence of each theme name
+    const uniqueStandardTemplates = standardTemplates.reduce((acc: BingoTemplate[], template) => {
+      const isDuplicate = acc.some(t => t.name === template.name);
+      if (!isDuplicate) {
+        acc.push(template);
+      } else {
+        console.log('HomeScreen: Removing duplicate theme:', template.name);
+      }
+      return acc;
+    }, []);
+    
+    // Sort according to THEME_ORDER
+    const sortedStandardTemplates = uniqueStandardTemplates.sort((a, b) => {
       const indexA = THEME_ORDER.indexOf(a.name);
       const indexB = THEME_ORDER.indexOf(b.name);
       
@@ -1181,6 +1194,8 @@ export default function HomeScreen() {
       // If neither is in the order array, maintain original order
       return 0;
     });
+    
+    console.log('HomeScreen: Displaying', sortedStandardTemplates.length, 'unique standard themes');
     
     return (
       <View style={styles.container}>
