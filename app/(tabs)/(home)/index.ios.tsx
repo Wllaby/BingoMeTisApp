@@ -12,7 +12,8 @@ import {
   ImageBackground,
   ImageSourcePropType,
   Modal,
-  Share
+  Share,
+  Image
 } from "react-native";
 import { Stack, useRouter, useFocusEffect } from "expo-router";
 import Constants from "expo-constants";
@@ -346,6 +347,9 @@ export default function HomeScreen() {
   
   // Fixed background image for sharing
   const shareBackgroundImage = resolveImageSource(require('@/assets/images/4444f386-e9bd-4350-ad73-914cee2f2d3e.webp'));
+  
+  // Free space image
+  const freeSpaceImage = resolveImageSource(require('@/assets/images/15c652d7-c181-4c0b-bc5a-bd94926d5aec.webp'));
   
   // Determine background based on current game's theme name and custom status
   const isCustomTheme = selectedTemplate?.is_custom === true;
@@ -1451,9 +1455,11 @@ export default function HomeScreen() {
                     disabled={!gameStarted}
                   >
                     {isFreeSpace ? (
-                      <View style={styles.freeSpaceContent}>
-                        <Text style={styles.freeSpaceText}>FREE</Text>
-                      </View>
+                      <Image 
+                        source={freeSpaceImage} 
+                        style={styles.freeSpaceImage}
+                        resizeMode="cover"
+                      />
                     ) : (
                       <Text 
                         style={[
@@ -1540,9 +1546,11 @@ export default function HomeScreen() {
                         ]}
                       >
                         {isFreeSpace ? (
-                          <View style={styles.freeSpaceContent}>
-                            <Text style={styles.freeSpaceText}>FREE</Text>
-                          </View>
+                          <Image 
+                            source={freeSpaceImage} 
+                            style={styles.freeSpaceImage}
+                            resizeMode="cover"
+                          />
                         ) : (
                           <Text 
                             style={[
@@ -1671,18 +1679,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
   },
   bannerSubtext: {
     fontSize: 14,
     color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 5,
   },
   backgroundSection: {
     flex: 1,
@@ -1898,8 +1900,8 @@ const styles = StyleSheet.create({
     borderColor: colors.marked,
   },
   bingoCellFree: {
-    backgroundColor: colors.highlight,
-    borderColor: colors.highlight,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: colors.cardBorder,
   },
   bingoCellDisabled: {
     opacity: 0.8,
@@ -1922,11 +1924,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(76, 175, 80, 0.8)',
   },
   shareableBingoCellFree: {
-    backgroundColor: 'rgba(255, 193, 7, 0.6)',
-    borderColor: 'rgba(255, 193, 7, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   cellText: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
@@ -1934,14 +1936,10 @@ const styles = StyleSheet.create({
   cellTextMarked: {
     color: colors.card,
   },
-  freeSpaceContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  freeSpaceText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
+  freeSpaceImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 6,
   },
   checkMark: {
     position: 'absolute',
