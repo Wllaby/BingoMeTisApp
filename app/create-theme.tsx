@@ -39,6 +39,8 @@ export default function CreateThemeScreen() {
   const [saving, setSaving] = useState(false);
   const [customThemeCount, setCustomThemeCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
 
   const backgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
 
@@ -137,6 +139,54 @@ export default function CreateThemeScreen() {
     }
     
     console.log('CreateThemeScreen: Option removed. Total options:', newOptions.length);
+  };
+
+  const startEditingOption = (index: number) => {
+    console.log('CreateThemeScreen: Starting to edit option at index:', index);
+    setEditingIndex(index);
+    setEditingText(options[index]);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const saveEditedOption = (index: number) => {
+    console.log('CreateThemeScreen: Saving edited option at index:', index);
+    const trimmedText = editingText.trim();
+    
+    if (!trimmedText) {
+      Alert.alert('Error', 'Option cannot be empty');
+      return;
+    }
+
+    const isDuplicate = options.some((opt, i) => i !== index && opt === trimmedText);
+    if (isDuplicate) {
+      Alert.alert('Error', 'This option already exists');
+      return;
+    }
+
+    const newOptions = [...options];
+    newOptions[index] = trimmedText;
+    setOptions(newOptions);
+    setEditingIndex(null);
+    setEditingText('');
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    console.log('CreateThemeScreen: Option edited successfully');
+  };
+
+  const cancelEditingOption = () => {
+    console.log('CreateThemeScreen: Canceling edit');
+    setEditingIndex(null);
+    setEditingText('');
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const saveTheme = async () => {
@@ -390,25 +440,84 @@ export default function CreateThemeScreen() {
               {options.map((option, index) => {
                 const optionKey = index;
                 const optionNumber = (index + 1).toString();
+                const isEditing = editingIndex === index;
                 
                 return (
                   <View key={optionKey} style={styles.optionItem}>
-                    <View style={styles.optionContent}>
-                      <Text style={styles.optionNumber}>{optionNumber}</Text>
-                      <Text style={styles.optionText}>{option}</Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => removeOption(index)}
-                      style={styles.removeButton}
-                      activeOpacity={0.7}
-                    >
-                      <IconSymbol 
-                        ios_icon_name="xmark.circle.fill" 
-                        android_material_icon_name="cancel"
-                        size={24} 
-                        color={colors.error} 
-                      />
-                    </TouchableOpacity>
+                    {isEditing ? (
+                      <React.Fragment>
+                        <View style={styles.editingContainer}>
+                          <Text style={styles.optionNumber}>{optionNumber}</Text>
+                          <TextInput
+                            style={styles.editInput}
+                            value={editingText}
+                            onChangeText={setEditingText}
+                            autoFocus
+                            maxLength={100}
+                            onSubmitEditing={() => saveEditedOption(index)}
+                          />
+                        </View>
+                        <View style={styles.editActions}>
+                          <TouchableOpacity
+                            onPress={() => saveEditedOption(index)}
+                            style={styles.editActionButton}
+                            activeOpacity={0.7}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="checkmark.circle.fill" 
+                              android_material_icon_name="check-circle"
+                              size={24} 
+                              color={colors.success} 
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={cancelEditingOption}
+                            style={styles.editActionButton}
+                            activeOpacity={0.7}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="xmark.circle.fill" 
+                              android_material_icon_name="cancel"
+                              size={24} 
+                              color={colors.textSecondary} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </React.Fragment>
+                    ) : (
+                      <React.Fragment>
+                        <View style={styles.optionContent}>
+                          <Text style={styles.optionNumber}>{optionNumber}</Text>
+                          <Text style={styles.optionText}>{option}</Text>
+                        </View>
+                        <View style={styles.optionActions}>
+                          <TouchableOpacity
+                            onPress={() => startEditingOption(index)}
+                            style={styles.actionButton}
+                            activeOpacity={0.7}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="pencil.circle.fill" 
+                              android_material_icon_name="edit"
+                              size={24} 
+                              color={colors.primary} 
+                            />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => removeOption(index)}
+                            style={styles.actionButton}
+                            activeOpacity={0.7}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="xmark.circle.fill" 
+                              android_material_icon_name="cancel"
+                              size={24} 
+                              color={colors.error} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </React.Fragment>
+                    )}
                   </View>
                 );
               })}
@@ -614,6 +723,36 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: colors.text,
+  },
+  optionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 4,
+  },
+  editingContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  editInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    padding: 4,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+  },
+  editActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  editActionButton: {
+    padding: 4,
   },
   removeButton: {
     padding: 4,
