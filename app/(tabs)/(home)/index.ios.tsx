@@ -1376,7 +1376,7 @@ export default function HomeScreen() {
               ios_icon_name="info.circle.fill" 
               android_material_icon_name="info"
               size={28} 
-              color="#FFFFFF" 
+              color="rgba(255, 255, 255, 0.75)" 
             />
           </TouchableOpacity>
         </View>
