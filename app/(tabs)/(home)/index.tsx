@@ -30,7 +30,7 @@ import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
 
 const { width, height } = Dimensions.get('window');
-const CELL_SIZE = (width - 80) / 5;
+const CELL_SIZE = (width - 40) / 5;
 
 // Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
@@ -1749,9 +1749,23 @@ export default function HomeScreen() {
                 const isFreeSpace = index === 12;
                 const cellKey = index;
                 
-                // Calculate dynamic font size based on text length
+                // Calculate dynamic font size based on text length - improved algorithm
                 const textLength = item.length;
-                const calculatedFontSize = textLength <= 10 ? 14 : textLength <= 20 ? 11 : textLength <= 30 ? 9 : 7;
+                let calculatedFontSize = 14;
+                
+                if (textLength <= 8) {
+                  calculatedFontSize = 14;
+                } else if (textLength <= 15) {
+                  calculatedFontSize = 12;
+                } else if (textLength <= 25) {
+                  calculatedFontSize = 10;
+                } else if (textLength <= 35) {
+                  calculatedFontSize = 9;
+                } else if (textLength <= 50) {
+                  calculatedFontSize = 8;
+                } else {
+                  calculatedFontSize = 7;
+                }
                 
                 return (
                   <TouchableOpacity
@@ -1779,7 +1793,9 @@ export default function HomeScreen() {
                           { fontSize: calculatedFontSize },
                           isMarked && styles.cellTextMarked
                         ]}
-                        numberOfLines={4}
+                        numberOfLines={0}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={0.5}
                       >
                         {item}
                       </Text>
@@ -1848,9 +1864,23 @@ export default function HomeScreen() {
                     const isFreeSpace = index === 12;
                     const cellKey = `share-${index}`;
                     
-                    // Calculate dynamic font size based on text length
+                    // Calculate dynamic font size based on text length - improved algorithm
                     const textLength = item.length;
-                    const calculatedFontSize = textLength <= 10 ? 14 : textLength <= 20 ? 11 : textLength <= 30 ? 9 : 7;
+                    let calculatedFontSize = 14;
+                    
+                    if (textLength <= 8) {
+                      calculatedFontSize = 14;
+                    } else if (textLength <= 15) {
+                      calculatedFontSize = 12;
+                    } else if (textLength <= 25) {
+                      calculatedFontSize = 10;
+                    } else if (textLength <= 35) {
+                      calculatedFontSize = 9;
+                    } else if (textLength <= 50) {
+                      calculatedFontSize = 8;
+                    } else {
+                      calculatedFontSize = 7;
+                    }
                     
                     return (
                       <View
@@ -1874,7 +1904,9 @@ export default function HomeScreen() {
                               { fontSize: calculatedFontSize },
                               isMarked && styles.cellTextMarked
                             ]}
-                            numberOfLines={4}
+                            numberOfLines={0}
+                            adjustsFontSizeToFit={true}
+                            minimumFontScale={0.5}
                           >
                             {item}
                           </Text>
@@ -2216,7 +2248,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
+    padding: 6,
   },
   bingoCellMarked: {
     backgroundColor: colors.marked,
@@ -2240,7 +2272,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
+    padding: 6,
   },
   shareableBingoCellMarked: {
     backgroundColor: 'rgba(76, 175, 80, 0.6)',
@@ -2255,6 +2287,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
     width: '100%',
+    lineHeight: undefined,
   },
   cellTextMarked: {
     color: colors.card,
