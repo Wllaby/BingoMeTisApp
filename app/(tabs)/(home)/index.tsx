@@ -1756,7 +1756,6 @@ export default function HomeScreen() {
                           styles.cellText,
                           isMarked && styles.cellTextMarked
                         ]}
-                        numberOfLines={0}
                         adjustsFontSizeToFit={true}
                         minimumFontScale={0.2}
                         allowFontScaling={false}
@@ -1850,7 +1849,6 @@ export default function HomeScreen() {
                               styles.cellText,
                               isMarked && styles.cellTextMarked
                             ]}
-                            numberOfLines={0}
                             adjustsFontSizeToFit={true}
                             minimumFontScale={0.2}
                             allowFontScaling={false}
@@ -2196,7 +2194,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+    padding: 4,
   },
   bingoCellMarked: {
     backgroundColor: colors.marked,
@@ -2220,7 +2218,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+    padding: 4,
   },
   shareableBingoCellMarked: {
     backgroundColor: 'rgba(76, 175, 80, 0.6)',
