@@ -397,15 +397,22 @@ export default function HomeScreen() {
     ? teenangstersBackgroundImage 
     : defaultBackgroundImage;
 
-  // Reload templates and active games when screen comes into focus
+  // Load templates and active games on mount
+  useEffect(() => {
+    console.log('HomeScreen: Initial load on mount');
+    loadTemplates();
+    loadActiveGames();
+  }, []);
+
+  // Reload templates and active games when screen comes into focus (but not on initial mount)
   useFocusEffect(
     React.useCallback(() => {
       console.log('HomeScreen: Screen focused, reloading templates and active games');
-      if (showTemplateList && !loading) {
+      if (showTemplateList) {
         loadTemplates();
         loadActiveGames();
       }
-    }, [showTemplateList, loading])
+    }, [showTemplateList])
   );
 
   const loadTemplates = async () => {
