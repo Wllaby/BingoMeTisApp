@@ -1758,7 +1758,8 @@ export default function HomeScreen() {
                           { fontSize: Math.max(8, Math.min(14, 200 / item.length)) }
                         ]}
                         adjustsFontSizeToFit={true}
-                        minimumFontScale={0.5}
+                        minimumFontScale={0.3}
+                        numberOfLines={0}
                       >
                         {item}
                       </Text>
@@ -1850,7 +1851,8 @@ export default function HomeScreen() {
                               { fontSize: Math.max(8, Math.min(14, 200 / item.length)) }
                             ]}
                             adjustsFontSizeToFit={true}
-                            minimumFontScale={0.5}
+                            minimumFontScale={0.3}
+                            numberOfLines={0}
                           >
                             {item}
                           </Text>
