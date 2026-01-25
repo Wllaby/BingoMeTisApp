@@ -401,11 +401,11 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       console.log('HomeScreen: Screen focused, reloading templates and active games');
-      if (showTemplateList) {
+      if (showTemplateList && !loading) {
         loadTemplates();
         loadActiveGames();
       }
-    }, [showTemplateList])
+    }, [showTemplateList, loading])
   );
 
   const loadTemplates = async () => {
