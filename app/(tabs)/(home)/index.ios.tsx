@@ -1929,11 +1929,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   cellText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
-    lineHeight: 13,
   },
   cellTextMarked: {
     color: colors.card,
