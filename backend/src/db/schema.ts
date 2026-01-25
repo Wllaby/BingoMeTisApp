@@ -29,3 +29,10 @@ export const bingoGames = pgTable('bingo_games', {
   threeBingosTime: integer('three_bingos_time'),
   fullCardTime: integer('full_card_time'),
 });
+
+export const feedback = pgTable('feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  message: text('message').notNull(),
+  email: text('email'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
