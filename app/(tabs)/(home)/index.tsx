@@ -1749,6 +1749,10 @@ export default function HomeScreen() {
                 const isFreeSpace = index === 12;
                 const cellKey = index;
                 
+                // Calculate dynamic font size based on text length
+                const textLength = item.length;
+                const calculatedFontSize = textLength <= 10 ? 14 : textLength <= 20 ? 11 : textLength <= 30 ? 9 : 7;
+                
                 return (
                   <TouchableOpacity
                     key={cellKey}
@@ -1772,8 +1776,10 @@ export default function HomeScreen() {
                       <Text 
                         style={[
                           styles.cellText,
+                          { fontSize: calculatedFontSize },
                           isMarked && styles.cellTextMarked
                         ]}
+                        numberOfLines={4}
                       >
                         {item}
                       </Text>
@@ -1842,6 +1848,10 @@ export default function HomeScreen() {
                     const isFreeSpace = index === 12;
                     const cellKey = `share-${index}`;
                     
+                    // Calculate dynamic font size based on text length
+                    const textLength = item.length;
+                    const calculatedFontSize = textLength <= 10 ? 14 : textLength <= 20 ? 11 : textLength <= 30 ? 9 : 7;
+                    
                     return (
                       <View
                         key={cellKey}
@@ -1861,8 +1871,10 @@ export default function HomeScreen() {
                           <Text 
                             style={[
                               styles.cellText,
+                              { fontSize: calculatedFontSize },
                               isMarked && styles.cellTextMarked
                             ]}
+                            numberOfLines={4}
                           >
                             {item}
                           </Text>
@@ -2204,7 +2216,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+    padding: 4,
   },
   bingoCellMarked: {
     backgroundColor: colors.marked,
@@ -2228,7 +2240,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+    padding: 4,
   },
   shareableBingoCellMarked: {
     backgroundColor: 'rgba(76, 175, 80, 0.6)',
