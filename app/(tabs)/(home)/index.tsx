@@ -1744,21 +1744,18 @@ export default function HomeScreen() {
                         resizeMode="cover"
                       />
                     ) : (
-                      <View style={styles.cellTextContainer}>
-                        <Text 
-                          style={[
-                            styles.cellText,
-                            isMarked && styles.cellTextMarked
-                          ]}
-                          numberOfLines={0}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.3}
-                          allowFontScaling={false}
-                          maxFontSizeMultiplier={1}
-                        >
-                          {item}
-                        </Text>
-                      </View>
+                      <Text 
+                        style={[
+                          styles.cellText,
+                          isMarked && styles.cellTextMarked
+                        ]}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.25}
+                        allowFontScaling={false}
+                        maxFontSizeMultiplier={1}
+                      >
+                        {item}
+                      </Text>
                     )}
                     {isMarked && !isFreeSpace && (
                       <View style={styles.checkMark}>
@@ -1840,21 +1837,18 @@ export default function HomeScreen() {
                             resizeMode="cover"
                           />
                         ) : (
-                          <View style={styles.cellTextContainer}>
-                            <Text 
-                              style={[
-                                styles.cellText,
-                                isMarked && styles.cellTextMarked
-                              ]}
-                              numberOfLines={0}
-                              adjustsFontSizeToFit
-                              minimumFontScale={0.3}
-                              allowFontScaling={false}
-                              maxFontSizeMultiplier={1}
-                            >
-                              {item}
-                            </Text>
-                          </View>
+                          <Text 
+                            style={[
+                              styles.cellText,
+                              isMarked && styles.cellTextMarked
+                            ]}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.25}
+                            allowFontScaling={false}
+                            maxFontSizeMultiplier={1}
+                          >
+                            {item}
+                          </Text>
                         )}
                         {isMarked && !isFreeSpace && (
                           <View style={styles.checkMark}>
@@ -2193,7 +2187,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 6,
+    padding: 4,
   },
   bingoCellMarked: {
     backgroundColor: colors.marked,
@@ -2217,7 +2211,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 6,
+    padding: 4,
   },
   shareableBingoCellMarked: {
     backgroundColor: 'rgba(76, 175, 80, 0.6)',
@@ -2227,18 +2221,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderColor: 'rgba(255, 255, 255, 0.6)',
   },
-  cellTextContainer: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   cellText: {
     fontSize: 11,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
     width: '100%',
+    paddingHorizontal: 2,
   },
   cellTextMarked: {
     color: colors.card,
