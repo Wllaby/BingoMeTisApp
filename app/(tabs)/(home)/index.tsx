@@ -1123,7 +1123,7 @@ export default function HomeScreen() {
         : `got ${bingoCount} BINGOs`;
       
       const themeName = selectedTemplate?.name || 'Bingo';
-      const shareMessage = `Check out my ${themeName} Bingo card! I ${progressText}! 🎉`;
+      const shareMessage = `Check out my ${themeName} Bingo card! I ${progressText}! 🎉 #BingoMeTis`;
 
       console.log('HomeScreen: Opening share dialog with message:', shareMessage);
 
