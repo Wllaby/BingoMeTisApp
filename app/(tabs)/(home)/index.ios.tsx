@@ -1754,10 +1754,11 @@ export default function HomeScreen() {
                       <Text 
                         style={[
                           styles.cellText,
-                          isMarked && styles.cellTextMarked
+                          isMarked && styles.cellTextMarked,
+                          { fontSize: Math.max(8, Math.min(14, 200 / item.length)) }
                         ]}
                         adjustsFontSizeToFit={true}
-                        minimumFontScale={0.3}
+                        minimumFontScale={0.5}
                       >
                         {item}
                       </Text>
@@ -1845,10 +1846,11 @@ export default function HomeScreen() {
                           <Text 
                             style={[
                               styles.cellText,
-                              isMarked && styles.cellTextMarked
+                              isMarked && styles.cellTextMarked,
+                              { fontSize: Math.max(8, Math.min(14, 200 / item.length)) }
                             ]}
                             adjustsFontSizeToFit={true}
-                            minimumFontScale={0.3}
+                            minimumFontScale={0.5}
                           >
                             {item}
                           </Text>
