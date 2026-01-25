@@ -89,7 +89,18 @@ export default function HistoryScreen() {
       const completedGames = transformedGames.filter(game => game.completed);
       console.log('HistoryScreen: Completed games:', completedGames.length);
       
-      setGames(completedGames);
+      // Sort by completion date (most recent first) and limit to last 10
+      const sortedGames = completedGames.sort((a, b) => {
+        const dateA = new Date(a.completed_at || a.created_at).getTime();
+        const dateB = new Date(b.completed_at || b.created_at).getTime();
+        return dateB - dateA;
+      });
+      
+      // Limit to last 10 games
+      const last10Games = sortedGames.slice(0, 10);
+      console.log('HistoryScreen: Showing last 10 completed games:', last10Games.length);
+      
+      setGames(last10Games);
       setLoading(false);
     } catch (error) {
       console.error('HistoryScreen: Error loading game history', error);
@@ -191,7 +202,7 @@ export default function HistoryScreen() {
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Game History</Text>
-            <Text style={styles.headerSubtitle}>Your past bingo games</Text>
+            <Text style={styles.headerSubtitle}>Your last 10 bingo games</Text>
           </View>
           <View style={styles.headerSpacer} />
         </View>
@@ -224,14 +235,9 @@ export default function HistoryScreen() {
                 const completionText = getBingoCompletionText(game);
                 
                 return (
-                  <TouchableOpacity
+                  <View
                     key={game.id}
                     style={styles.gameCard}
-                    onPress={() => {
-                      console.log('HistoryScreen: Game card tapped', game.id);
-                      Alert.alert('Coming Soon', 'View game details will be available soon!');
-                    }}
-                    activeOpacity={0.7}
                   >
                     <View style={styles.gameCardHeader}>
                       <View style={styles.gameCardTitle}>
@@ -259,7 +265,7 @@ export default function HistoryScreen() {
                         <Text style={styles.statLabel}>Completion</Text>
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </>
