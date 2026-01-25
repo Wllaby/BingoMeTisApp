@@ -13,7 +13,10 @@ import {
   ImageSourcePropType,
   Modal,
   Share,
-  Image
+  Image,
+  TextInput,
+  KeyboardAvoidingView,
+  Linking
 } from "react-native";
 import { Stack, useRouter, useFocusEffect } from "expo-router";
 import Constants from "expo-constants";
@@ -331,6 +334,11 @@ export default function HomeScreen() {
   const [isSharing, setIsSharing] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [previewItems, setPreviewItems] = useState<string[]>([]);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [sendingFeedback, setSendingFeedback] = useState(false);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const customThemeBackgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
@@ -1146,6 +1154,142 @@ export default function HomeScreen() {
     }
   };
 
+  const handleInfoPress = () => {
+    console.log('HomeScreen: Info button pressed');
+    setShowInfoModal(true);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleSendFeedback = () => {
+    console.log('HomeScreen: Send feedback option selected');
+    setShowInfoModal(false);
+    setShowFeedbackModal(true);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleRateApp = async () => {
+    console.log('HomeScreen: Rate app option selected');
+    setShowInfoModal(false);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const appStoreUrl = Platform.select({
+      ios: 'https://apps.apple.com/app/id6739162085',
+      android: 'https://play.google.com/store/apps/details?id=com.bingometis.app',
+      default: 'https://bingometis.com/'
+    });
+
+    try {
+      const supported = await Linking.canOpenURL(appStoreUrl);
+      if (supported) {
+        await Linking.openURL(appStoreUrl);
+        console.log('HomeScreen: Opened app store URL');
+      } else {
+        console.error('HomeScreen: Cannot open app store URL');
+        Alert.alert('Error', 'Unable to open app store');
+      }
+    } catch (error) {
+      console.error('HomeScreen: Error opening app store', error);
+      Alert.alert('Error', 'Failed to open app store');
+    }
+  };
+
+  const handleMoreInfo = async () => {
+    console.log('HomeScreen: More information option selected');
+    setShowInfoModal(false);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const websiteUrl = 'https://bingometis.com/';
+
+    try {
+      const supported = await Linking.canOpenURL(websiteUrl);
+      if (supported) {
+        await Linking.openURL(websiteUrl);
+        console.log('HomeScreen: Opened website URL');
+      } else {
+        console.error('HomeScreen: Cannot open website URL');
+        Alert.alert('Error', 'Unable to open website');
+      }
+    } catch (error) {
+      console.error('HomeScreen: Error opening website', error);
+      Alert.alert('Error', 'Failed to open website');
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    console.log('HomeScreen: Submit feedback button pressed');
+    
+    const trimmedMessage = feedbackMessage.trim();
+    if (!trimmedMessage) {
+      Alert.alert('Error', 'Please enter your feedback message');
+      return;
+    }
+
+    try {
+      setSendingFeedback(true);
+
+      if (!BACKEND_URL) {
+        console.error('HomeScreen: BACKEND_URL is not configured');
+        Alert.alert('Error', 'Backend URL is not configured');
+        setSendingFeedback(false);
+        return;
+      }
+
+      console.log('HomeScreen: Sending feedback to backend');
+      const response = await fetch(`${BACKEND_URL}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: trimmedMessage,
+          email: feedbackEmail.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('HomeScreen: Feedback sent successfully', data);
+
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+
+      setShowFeedbackModal(false);
+      setFeedbackMessage('');
+      setFeedbackEmail('');
+      setSendingFeedback(false);
+
+      Alert.alert('Thank You!', 'Your feedback has been sent successfully.');
+    } catch (error) {
+      console.error('HomeScreen: Error sending feedback', error);
+      setSendingFeedback(false);
+      Alert.alert('Error', 'Failed to send feedback. Please try again.');
+    }
+  };
+
+  const handleCancelFeedback = () => {
+    console.log('HomeScreen: Cancel feedback button pressed');
+    setShowFeedbackModal(false);
+    setFeedbackMessage('');
+    setFeedbackEmail('');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
   if (loading) {
     const loadingText = "Loading...";
     return (
@@ -1223,6 +1367,18 @@ export default function HomeScreen() {
         
         {/* Top Banner */}
         <View style={styles.topBanner}>
+          <TouchableOpacity 
+            style={styles.infoButton}
+            onPress={handleInfoPress}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="info.circle.fill" 
+              android_material_icon_name="info"
+              size={28} 
+              color="#FFFFFF" 
+            />
+          </TouchableOpacity>
         </View>
         
         <ImageBackground 
@@ -1355,6 +1511,133 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </ScrollView>
         </ImageBackground>
+
+        {/* Info Modal */}
+        <Modal
+          visible={showInfoModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowInfoModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Information</Text>
+              
+              <TouchableOpacity
+                style={styles.infoOptionButton}
+                onPress={handleSendFeedback}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="envelope.fill" 
+                  android_material_icon_name="email"
+                  size={24} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.infoOptionText}>Send feedback</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.infoOptionButton}
+                onPress={handleRateApp}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="star.fill" 
+                  android_material_icon_name="star"
+                  size={24} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.infoOptionText}>Rate this app</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.infoOptionButton}
+                onPress={handleMoreInfo}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="safari.fill" 
+                  android_material_icon_name="language"
+                  size={24} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.infoOptionText}>More information</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => setShowInfoModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalButtonTextSecondary}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Feedback Modal */}
+        <Modal
+          visible={showFeedbackModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowFeedbackModal(false)}
+        >
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
+            <View style={styles.feedbackModalContent}>
+              <Text style={styles.modalTitle}>Send Feedback</Text>
+              <Text style={styles.feedbackDescription}>
+                We&apos;d love to hear from you! Your feedback is anonymous unless you choose to provide your email.
+              </Text>
+              
+              <TextInput
+                style={styles.feedbackInput}
+                placeholder="Your feedback (required)"
+                placeholderTextColor={colors.textSecondary}
+                multiline
+                numberOfLines={6}
+                value={feedbackMessage}
+                onChangeText={setFeedbackMessage}
+                textAlignVertical="top"
+              />
+
+              <TextInput
+                style={styles.emailInput}
+                placeholder="Your email (optional)"
+                placeholderTextColor={colors.textSecondary}
+                value={feedbackEmail}
+                onChangeText={setFeedbackEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <View style={styles.feedbackButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSecondary, styles.feedbackCancelButton]}
+                  onPress={handleCancelFeedback}
+                  activeOpacity={0.7}
+                  disabled={sendingFeedback}
+                >
+                  <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary, styles.feedbackSubmitButton, sendingFeedback && styles.feedbackSubmitButtonDisabled]}
+                  onPress={handleSubmitFeedback}
+                  activeOpacity={0.7}
+                  disabled={sendingFeedback}
+                >
+                  <Text style={styles.modalButtonTextPrimary}>
+                    {sendingFeedback ? 'Sending...' : 'Send'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </View>
     );
   }
@@ -1683,6 +1966,14 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 60 : 8,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  infoButton: {
+    position: 'absolute',
+    right: 20,
+    top: Platform.OS === 'ios' ? 60 : 8,
+    padding: 8,
+    zIndex: 10,
   },
   bannerText: {
     fontSize: 24,
@@ -2173,5 +2464,73 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  infoOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    width: '100%',
+  },
+  infoOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    flex: 1,
+  },
+  feedbackModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    width: '90%',
+    maxWidth: 500,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  feedbackDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  feedbackInput: {
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 12,
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  emailInput: {
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  feedbackButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  feedbackCancelButton: {
+    flex: 1,
+  },
+  feedbackSubmitButton: {
+    flex: 1,
+  },
+  feedbackSubmitButtonDisabled: {
+    opacity: 0.5,
   },
 });
