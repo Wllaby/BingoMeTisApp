@@ -161,38 +161,42 @@ function SwipeableCustomTheme({ template, onPress, onDelete, onCopyCode }: Swipe
   return (
     <View style={styles.swipeableContainer}>
       {/* Left action - Delete */}
-      <View style={styles.leftAction}>
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          activeOpacity={0.7}
-        >
-          <IconSymbol 
-            ios_icon_name="trash.fill" 
-            android_material_icon_name="delete"
-            size={24} 
-            color="#FFFFFF" 
-          />
-          <Text style={styles.actionText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
+      {isRevealed === 'left' && (
+        <View style={styles.leftAction}>
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={handleDelete}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="trash.fill" 
+              android_material_icon_name="delete"
+              size={24} 
+              color="#FFFFFF" 
+            />
+            <Text style={styles.actionText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Right action - Share Code */}
-      <View style={styles.rightAction}>
-        <TouchableOpacity 
-          style={styles.shareCodeButton}
-          onPress={handleCopyCode}
-          activeOpacity={0.7}
-        >
-          <IconSymbol 
-            ios_icon_name="doc.on.doc.fill" 
-            android_material_icon_name="content-copy"
-            size={24} 
-            color="#FFFFFF" 
-          />
-          <Text style={styles.actionText}>Copy Code</Text>
-        </TouchableOpacity>
-      </View>
+      {isRevealed === 'right' && (
+        <View style={styles.rightAction}>
+          <TouchableOpacity 
+            style={styles.shareCodeButton}
+            onPress={handleCopyCode}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="doc.on.doc.fill" 
+              android_material_icon_name="content-copy"
+              size={24} 
+              color="#FFFFFF" 
+            />
+            <Text style={styles.actionText}>Copy Code</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Main card */}
       <GestureDetector gesture={panGesture}>
@@ -273,21 +277,23 @@ function SwipeableActiveGame({ game, onPress, onDelete }: SwipeableActiveGamePro
   return (
     <View style={styles.swipeableContainer}>
       {/* Left action - Delete */}
-      <View style={styles.leftAction}>
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          activeOpacity={0.7}
-        >
-          <IconSymbol 
-            ios_icon_name="trash.fill" 
-            android_material_icon_name="delete"
-            size={24} 
-            color="#FFFFFF" 
-          />
-          <Text style={styles.actionText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
+      {isRevealed && (
+        <View style={styles.leftAction}>
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={handleDelete}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="trash.fill" 
+              android_material_icon_name="delete"
+              size={24} 
+              color="#FFFFFF" 
+            />
+            <Text style={styles.actionText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Main card */}
       <GestureDetector gesture={panGesture}>
@@ -1114,9 +1120,14 @@ export default function HomeScreen() {
       }
 
       console.log('HomeScreen: Capturing screenshot of bingo card with branded background');
+      
+      // Add a small delay to ensure the view is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const uri = await captureRef(shareableCardRef, {
         format: 'png',
         quality: 1,
+        result: 'tmpfile',
       });
 
       console.log('HomeScreen: Screenshot captured successfully, URI:', uri);
@@ -1154,8 +1165,9 @@ export default function HomeScreen() {
       }
 
       setIsSharing(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('HomeScreen: Error sharing bingo card', error);
+      console.error('HomeScreen: Error details:', error.message, error.stack);
       setIsSharing(false);
       Alert.alert('Error', 'Failed to share bingo card. Please try again.');
     }
@@ -2371,6 +2383,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-end',
     paddingRight: 20,
+    zIndex: 1,
   },
   rightAction: {
     position: 'absolute',
@@ -2381,6 +2394,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingLeft: 20,
+    zIndex: 1,
   },
   deleteButton: {
     backgroundColor: '#FF3B30',
