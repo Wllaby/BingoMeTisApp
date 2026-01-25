@@ -1749,22 +1749,22 @@ export default function HomeScreen() {
                 const isFreeSpace = index === 12;
                 const cellKey = index;
                 
-                // Calculate dynamic font size based on text length - improved algorithm
+                // Calculate dynamic font size based on text length - smaller sizes
                 const textLength = item.length;
-                let calculatedFontSize = 14;
+                let calculatedFontSize = 12;
                 
                 if (textLength <= 8) {
-                  calculatedFontSize = 14;
-                } else if (textLength <= 15) {
                   calculatedFontSize = 12;
-                } else if (textLength <= 25) {
+                } else if (textLength <= 15) {
                   calculatedFontSize = 10;
-                } else if (textLength <= 35) {
+                } else if (textLength <= 25) {
                   calculatedFontSize = 9;
-                } else if (textLength <= 50) {
+                } else if (textLength <= 35) {
                   calculatedFontSize = 8;
-                } else {
+                } else if (textLength <= 50) {
                   calculatedFontSize = 7;
+                } else {
+                  calculatedFontSize = 6;
                 }
                 
                 return (
@@ -1864,22 +1864,22 @@ export default function HomeScreen() {
                     const isFreeSpace = index === 12;
                     const cellKey = `share-${index}`;
                     
-                    // Calculate dynamic font size based on text length - improved algorithm
+                    // Calculate dynamic font size based on text length - smaller sizes
                     const textLength = item.length;
-                    let calculatedFontSize = 14;
+                    let calculatedFontSize = 12;
                     
                     if (textLength <= 8) {
-                      calculatedFontSize = 14;
-                    } else if (textLength <= 15) {
                       calculatedFontSize = 12;
-                    } else if (textLength <= 25) {
+                    } else if (textLength <= 15) {
                       calculatedFontSize = 10;
-                    } else if (textLength <= 35) {
+                    } else if (textLength <= 25) {
                       calculatedFontSize = 9;
-                    } else if (textLength <= 50) {
+                    } else if (textLength <= 35) {
                       calculatedFontSize = 8;
-                    } else {
+                    } else if (textLength <= 50) {
                       calculatedFontSize = 7;
+                    } else {
+                      calculatedFontSize = 6;
                     }
                     
                     return (
