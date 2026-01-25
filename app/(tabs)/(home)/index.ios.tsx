@@ -339,6 +339,7 @@ export default function HomeScreen() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const customThemeBackgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
@@ -759,6 +760,7 @@ export default function HomeScreen() {
   const handleFullCardFinish = async () => {
     console.log('HomeScreen: Full card finish button tapped');
     setShowFullCardModal(false);
+    setShowConfetti(false);
     resetGame();
   };
 
@@ -836,6 +838,7 @@ export default function HomeScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
+      setShowConfetti(true);
       if (confettiRef.current) {
         confettiRef.current.start();
       }
@@ -906,6 +909,7 @@ export default function HomeScreen() {
     setNextTarget(null);
     setGameStarted(false);
     setPreviewItems([]);
+    setShowConfetti(false);
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -1691,13 +1695,15 @@ export default function HomeScreen() {
       >
         <View style={styles.overlay} />
         
-        <ConfettiCannon
-          count={200}
-          origin={{x: width / 2, y: 0}}
-          autoStart={false}
-          ref={confettiRef}
-          fadeOut={true}
-        />
+        {showConfetti && (
+          <ConfettiCannon
+            count={200}
+            origin={{x: width / 2, y: 0}}
+            autoStart={false}
+            ref={confettiRef}
+            fadeOut={true}
+          />
+        )}
         
         <View style={styles.gameContainer}>
           <View style={styles.gameHeader}>
