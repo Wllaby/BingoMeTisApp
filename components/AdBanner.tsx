@@ -4,11 +4,11 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { usePremium } from '@/contexts/PremiumContext';
 
-// Replace with your actual AdMob ad unit IDs from Google AdMob console
+// AdMob ad unit IDs from Google AdMob console
 const AD_UNIT_ID = __DEV__ 
   ? TestIds.ADAPTIVE_BANNER 
   : Platform.select({
-      ios: 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY',
+      ios: 'ca-app-pub-5783177820090411/5553929484',
       android: 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY',
       default: TestIds.ADAPTIVE_BANNER
     });

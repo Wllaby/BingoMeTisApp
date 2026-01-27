@@ -24,7 +24,7 @@
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationPortrait"
         ],
-        "GADApplicationIdentifier": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+        "GADApplicationIdentifier": "ca-app-pub-5783177820090411~8022679724",
         "SKAdNetworkItems": [
           {
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
@@ -53,7 +53,7 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
-          "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"
+          "iosAppId": "ca-app-pub-5783177820090411~8022679724"
         }
       ]
     ],
