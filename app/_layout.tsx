@@ -8,6 +8,7 @@ import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColorScheme, Alert } from "react-native";
 import { useNetworkState } from "expo-network";
+import * as Linking from "expo-linking";
 import {
   DarkTheme,
   DefaultTheme,
@@ -38,6 +39,34 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Handle deep links for Superwall
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      console.log('Deep link received:', event.url);
+      
+      const url = Linking.parse(event.url);
+      console.log('Parsed deep link:', url);
+      
+      // Superwall deep links will be automatically handled by the SDK
+      // You can add custom handling here if needed
+    };
+
+    // Listen for deep links when app is already open
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened via deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log('App opened with deep link:', url);
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   React.useEffect(() => {
     if (

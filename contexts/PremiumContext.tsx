@@ -19,11 +19,8 @@ interface PremiumContextType {
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
-// Superwall API keys - Replace with your actual keys from Superwall dashboard
-const SUPERWALL_API_KEYS = {
-  ios: 'pk_d1efcfeff344f6a88f5e7d2f7c4e2b4a7c3b2a1a0b9c8d7e6f5a4b3c2d1e0f9',
-  android: 'pk_d1efcfeff344f6a88f5e7d2f7c4e2b4a7c3b2a1a0b9c8d7e6f5a4b3c2d1e0f9'
-};
+// Superwall API key from your dashboard
+const SUPERWALL_API_KEY = 'pk_QrtKh8s4cybt_M4lx7gg1';
 
 function PremiumProviderInner({ children }: { children: ReactNode }) {
   const { subscriptionStatus } = useUser();
@@ -32,43 +29,43 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
 
   const { registerPlacement } = usePlacement({
     onPresent: (info) => {
-      console.log('PremiumContext: Paywall presented', info);
+      console.log('Superwall: Paywall presented', info);
     },
     onDismiss: (info, result) => {
-      console.log('PremiumContext: Paywall dismissed', info, result);
+      console.log('Superwall: Paywall dismissed', info, result);
       // Check subscription status after dismissal
       if (result === 'purchased' || result === 'restored') {
-        console.log('PremiumContext: User purchased or restored subscription');
+        console.log('Superwall: User purchased or restored subscription');
       }
     },
     onError: (error) => {
-      console.error('PremiumContext: Paywall error', error);
+      console.error('Superwall: Paywall error', error);
     }
   });
 
   useEffect(() => {
-    console.log('PremiumContext: Subscription status changed', subscriptionStatus);
+    console.log('Superwall: Subscription status changed', subscriptionStatus);
     
     if (subscriptionStatus) {
       const isActive = subscriptionStatus.status === 'ACTIVE';
       setIsPremium(isActive);
-      console.log('PremiumContext: Premium status:', isActive);
+      console.log('Superwall: Premium status:', isActive);
     }
     
     setIsLoading(false);
   }, [subscriptionStatus]);
 
   const showPaywall = async () => {
-    console.log('PremiumContext: Showing paywall');
+    console.log('Superwall: Showing paywall for premium_upgrade placement');
     try {
       await registerPlacement({
         placement: 'premium_upgrade',
         feature: () => {
-          console.log('PremiumContext: User has premium access');
+          console.log('Superwall: User has premium access');
         }
       });
     } catch (error) {
-      console.error('PremiumContext: Error showing paywall', error);
+      console.error('Superwall: Error showing paywall', error);
     }
   };
 
@@ -88,14 +85,15 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
 export function PremiumProvider({ children }: { children: ReactNode }) {
   return (
     <SuperwallProvider 
-      apiKeys={SUPERWALL_API_KEYS}
+      apiKey={SUPERWALL_API_KEY}
       onConfigurationError={(error) => {
-        console.error('PremiumContext: Superwall configuration error', error);
+        console.error('Superwall: Configuration error', error);
       }}
     >
       <SuperwallLoading>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Initializing payment system...</Text>
         </View>
       </SuperwallLoading>
 
@@ -131,6 +129,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textSecondary
   },
   errorContainer: {
     flex: 1,

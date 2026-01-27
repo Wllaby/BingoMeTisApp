@@ -39,7 +39,22 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively",
-      "screenOrientation": "portrait"
+      "screenOrientation": "portrait",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "bingometis"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/images/final_quest_240x240.png",
@@ -57,7 +72,7 @@
         }
       ]
     ],
-    "scheme": "Bingo MeTis",
+    "scheme": "bingometis",
     "experiments": {
       "typedRoutes": true
     },
