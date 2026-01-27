@@ -14,8 +14,6 @@ import {
   Modal,
   Share,
   Image,
-  TextInput,
-  KeyboardAvoidingView,
   Linking
 } from "react-native";
 import { Stack, useRouter, useFocusEffect } from "expo-router";
@@ -352,10 +350,6 @@ function HomeScreen() {
   const [gameStarted, setGameStarted] = useState(false);
   const [previewItems, setPreviewItems] = useState<string[]>([]);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [feedbackEmail, setFeedbackEmail] = useState('');
-  const [sendingFeedback, setSendingFeedback] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [customThemesExpanded, setCustomThemesExpanded] = useState(false);
   const [activeGamesExpanded, setActiveGamesExpanded] = useState(false);
@@ -1189,11 +1183,27 @@ function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleSendFeedback = () => {
-    console.log('HomeScreen: Send feedback option selected');
+  const handleSendFeedback = async () => {
+    console.log('HomeScreen: Send feedback option selected - opening feedback URL');
     setShowInfoModal(false);
-    setShowFeedbackModal(true);
+    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const feedbackUrl = 'https://bingometis.com/feedback/';
+
+    try {
+      const supported = await Linking.canOpenURL(feedbackUrl);
+      if (supported) {
+        await Linking.openURL(feedbackUrl);
+        console.log('HomeScreen: Opened feedback URL');
+      } else {
+        console.error('HomeScreen: Cannot open feedback URL');
+        Alert.alert('Error', 'Unable to open feedback page');
+      }
+    } catch (error) {
+      console.error('HomeScreen: Error opening feedback URL', error);
+      Alert.alert('Error', 'Failed to open feedback page');
+    }
   };
 
   const handleRateApp = async () => {
@@ -1244,67 +1254,6 @@ function HomeScreen() {
       console.error('HomeScreen: Error opening website', error);
       Alert.alert('Error', 'Failed to open website');
     }
-  };
-
-  const handleSubmitFeedback = async () => {
-    console.log('HomeScreen: Submit feedback button pressed');
-    
-    const trimmedMessage = feedbackMessage.trim();
-    if (!trimmedMessage) {
-      Alert.alert('Error', 'Please enter your feedback message');
-      return;
-    }
-
-    try {
-      setSendingFeedback(true);
-
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        setSendingFeedback(false);
-        return;
-      }
-
-      console.log('HomeScreen: Sending feedback to backend');
-      const response = await fetch(`${BACKEND_URL}/feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: trimmedMessage,
-          email: feedbackEmail.trim() || undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('HomeScreen: Feedback sent successfully', data);
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      setShowFeedbackModal(false);
-      setFeedbackMessage('');
-      setFeedbackEmail('');
-      setSendingFeedback(false);
-
-      Alert.alert('Thank You!', 'Your feedback has been sent successfully.');
-    } catch (error) {
-      console.error('HomeScreen: Error sending feedback', error);
-      setSendingFeedback(false);
-      Alert.alert('Error', 'Failed to send feedback. Please try again.');
-    }
-  };
-
-  const handleCancelFeedback = () => {
-    console.log('HomeScreen: Cancel feedback button pressed');
-    setShowFeedbackModal(false);
-    setFeedbackMessage('');
-    setFeedbackEmail('');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleCreateTheme = () => {
@@ -1719,69 +1668,6 @@ function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-
-        {/* Feedback Modal */}
-        <Modal
-          visible={showFeedbackModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowFeedbackModal(false)}
-        >
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalOverlay}
-          >
-            <View style={styles.feedbackModalContent}>
-              <Text style={styles.modalTitle}>Send Feedback</Text>
-              <Text style={styles.feedbackDescription}>
-                We&apos;d love to hear from you! Your feedback is anonymous unless you choose to provide your email.
-              </Text>
-              
-              <TextInput
-                style={styles.feedbackInput}
-                placeholder="Your feedback (required)"
-                placeholderTextColor={colors.textSecondary}
-                multiline
-                numberOfLines={6}
-                value={feedbackMessage}
-                onChangeText={setFeedbackMessage}
-                textAlignVertical="top"
-              />
-
-              <TextInput
-                style={styles.emailInput}
-                placeholder="Your email (optional)"
-                placeholderTextColor={colors.textSecondary}
-                value={feedbackEmail}
-                onChangeText={setFeedbackEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-
-              <View style={styles.feedbackButtonContainer}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonSecondary, styles.feedbackCancelButton]}
-                  onPress={handleCancelFeedback}
-                  activeOpacity={0.7}
-                  disabled={sendingFeedback}
-                >
-                  <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonPrimary, styles.feedbackSubmitButton, sendingFeedback && styles.feedbackSubmitButtonDisabled]}
-                  onPress={handleSubmitFeedback}
-                  activeOpacity={0.7}
-                  disabled={sendingFeedback}
-                >
-                  <Text style={styles.modalButtonTextPrimary}>
-                    {sendingFeedback ? 'Sending...' : 'Send'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
         </Modal>
       </View>
     );
@@ -2720,58 +2606,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     flex: 1,
-  },
-  feedbackModalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 30,
-    width: '90%',
-    maxWidth: 500,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  feedbackDescription: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  feedbackInput: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 12,
-    minHeight: 120,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  emailInput: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  feedbackButtonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  feedbackCancelButton: {
-    flex: 1,
-  },
-  feedbackSubmitButton: {
-    flex: 1,
-  },
-  feedbackSubmitButtonDisabled: {
-    opacity: 0.5,
   },
 });
 
