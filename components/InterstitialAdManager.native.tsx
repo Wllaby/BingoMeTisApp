@@ -3,13 +3,31 @@ import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { usePremium } from '@/contexts/PremiumContext';
 import Constants from 'expo-constants';
-import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 
 // Check if we're running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
 
+// Conditionally import AdMob modules only if NOT in Expo Go
+let InterstitialAd: any;
+let AdEventType: any;
+let TestIds: any;
+
+if (!isExpoGo) {
+  try {
+    const AdMobModule = require('react-native-google-mobile-ads');
+    InterstitialAd = AdMobModule.InterstitialAd;
+    AdEventType = AdMobModule.AdEventType;
+    TestIds = AdMobModule.TestIds;
+    console.log('InterstitialAdManager: Google Mobile Ads module loaded successfully');
+  } catch (error) {
+    console.error('InterstitialAdManager: Failed to load Google Mobile Ads module:', error);
+  }
+}
+
 // AdMob ad unit IDs from Google AdMob console
 const getAdUnitId = () => {
+  if (!TestIds) return '';
+  
   return __DEV__ 
     ? TestIds.INTERSTITIAL 
     : Platform.select({
@@ -29,8 +47,8 @@ export function useInterstitialAd() {
   const adRef = useRef<any>(null);
 
   useEffect(() => {
-    if (isPremium || isExpoGo) {
-      console.log('InterstitialAdManager: Not loading ads - isPremium:', isPremium, 'isExpoGo:', isExpoGo);
+    if (isPremium || isExpoGo || !InterstitialAd) {
+      console.log('InterstitialAdManager: Not loading ads - isPremium:', isPremium, 'isExpoGo:', isExpoGo, 'InterstitialAd available:', !!InterstitialAd);
       return;
     }
 
@@ -77,8 +95,8 @@ export function useInterstitialAd() {
   }, [isPremium]);
 
   const showInterstitialAd = async () => {
-    if (isPremium || isExpoGo) {
-      console.log('InterstitialAdManager: Not showing ad - isPremium:', isPremium, 'isExpoGo:', isExpoGo);
+    if (isPremium || isExpoGo || !InterstitialAd) {
+      console.log('InterstitialAdManager: Not showing ad - isPremium:', isPremium, 'isExpoGo:', isExpoGo, 'InterstitialAd available:', !!InterstitialAd);
       return;
     }
 

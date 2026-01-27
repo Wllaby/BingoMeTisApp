@@ -3,13 +3,31 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { usePremium } from '@/contexts/PremiumContext';
 import Constants from 'expo-constants';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 // Check if we're running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
 
+// Conditionally import AdMob modules only if NOT in Expo Go
+let BannerAd: any;
+let BannerAdSize: any;
+let TestIds: any;
+
+if (!isExpoGo) {
+  try {
+    const AdMobModule = require('react-native-google-mobile-ads');
+    BannerAd = AdMobModule.BannerAd;
+    BannerAdSize = AdMobModule.BannerAdSize;
+    TestIds = AdMobModule.TestIds;
+    console.log('AdBanner: Google Mobile Ads module loaded successfully');
+  } catch (error) {
+    console.error('AdBanner: Failed to load Google Mobile Ads module:', error);
+  }
+}
+
 // AdMob ad unit IDs from Google AdMob console
 const getAdUnitId = () => {
+  if (!TestIds) return '';
+  
   return __DEV__ 
     ? TestIds.ADAPTIVE_BANNER 
     : Platform.select({
@@ -31,9 +49,9 @@ export function AdBanner({ position = 'bottom' }: AdBannerProps) {
     console.log('AdBanner: Component mounted, isPremium:', isPremium);
   }, [isPremium]);
 
-  // Don't show ads if user is premium, still loading, or in Expo Go
-  if (isPremium || isLoading || isExpoGo) {
-    console.log('AdBanner: Not showing ad - isPremium:', isPremium, 'isLoading:', isLoading, 'isExpoGo:', isExpoGo);
+  // Don't show ads if user is premium, still loading, in Expo Go, or AdMob not available
+  if (isPremium || isLoading || isExpoGo || !BannerAd) {
+    console.log('AdBanner: Not showing ad - isPremium:', isPremium, 'isLoading:', isLoading, 'isExpoGo:', isExpoGo, 'BannerAd available:', !!BannerAd);
     return null;
   }
 
