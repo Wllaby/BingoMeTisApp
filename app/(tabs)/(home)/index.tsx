@@ -28,12 +28,18 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, runOnJS } from 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
+import { usePremium } from '@/contexts/PremiumContext';
+import { useInterstitialAd } from '@/components/InterstitialAdManager';
+import { AdBanner } from '@/components/AdBanner';
 
 const { width, height } = Dimensions.get('window');
 const CELL_SIZE = (width - 40) / 5;
 
 // Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+
+// Maximum custom themes for free users
+const MAX_CUSTOM_THEMES_FREE = 5;
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -325,6 +331,8 @@ export default function HomeScreen() {
   console.log('HomeScreen: Component mounted');
   
   const router = useRouter();
+  const { isPremium, showPaywall } = usePremium();
+  const { showInterstitialAd } = useInterstitialAd();
   const confettiRef = useRef<any>(null);
   const bingoCardRef = useRef<View>(null);
   const shareableCardRef = useRef<View>(null);
@@ -711,6 +719,12 @@ export default function HomeScreen() {
       const savedGame = await response.json();
       console.log('HomeScreen: Game saved to history successfully', savedGame.id);
       console.log('HomeScreen: Game completed with', bingoCount, 'bingos');
+      
+      // Show interstitial ad for free users
+      if (!isPremium) {
+        console.log('HomeScreen: User is free, showing interstitial ad');
+        await showInterstitialAd();
+      }
     } catch (error) {
       console.error('HomeScreen: Error saving game to history', error);
       // Don't show error to user, just log it
@@ -1313,6 +1327,44 @@ export default function HomeScreen() {
     }
   };
 
+  const handleCreateTheme = () => {
+    console.log('HomeScreen: Create your own theme tapped');
+    
+    // Check if user has reached the limit for free users
+    const customTemplates = templates.filter(t => t.is_custom);
+    if (!isPremium && customTemplates.length >= MAX_CUSTOM_THEMES_FREE) {
+      Alert.alert(
+        'Upgrade to Premium',
+        `Free users can create up to ${MAX_CUSTOM_THEMES_FREE} custom themes. Upgrade to Premium for unlimited custom themes!`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Upgrade',
+            onPress: () => {
+              router.push('/premium');
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
+    router.push('/create-theme');
+  };
+
+  const handleGoPremium = () => {
+    console.log('HomeScreen: Go Premium button tapped');
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    
+    router.push('/premium');
+  };
+
   if (loading) {
     const loadingText = "Loading...";
     return (
@@ -1402,6 +1454,22 @@ export default function HomeScreen() {
               color="rgba(255, 255, 255, 0.75)" 
             />
           </TouchableOpacity>
+          
+          {!isPremium && (
+            <TouchableOpacity 
+              style={styles.premiumButton}
+              onPress={handleGoPremium}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="crown.fill" 
+                android_material_icon_name="workspace-premium"
+                size={24} 
+                color="#FFD700" 
+              />
+              <Text style={styles.premiumButtonText}>Go Premium</Text>
+            </TouchableOpacity>
+          )}
         </View>
         
         <ImageBackground 
@@ -1484,10 +1552,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.createButton}
-              onPress={() => {
-                console.log('HomeScreen: Create your own theme tapped');
-                router.push('/create-theme');
-              }}
+              onPress={handleCreateTheme}
               activeOpacity={0.7}
             >
               <IconSymbol 
@@ -1497,6 +1562,11 @@ export default function HomeScreen() {
                 color={colors.primary} 
               />
               <Text style={styles.createButtonText}>Create your own theme</Text>
+              {!isPremium && customTemplates.length > 0 && (
+                <Text style={styles.createButtonSubtext}>
+                  {customTemplates.length}/{MAX_CUSTOM_THEMES_FREE} free themes used
+                </Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1534,6 +1604,9 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </ScrollView>
         </ImageBackground>
+
+        {/* Ad Banner at bottom for free users */}
+        <AdBanner position="bottom" />
 
         {/* Info Modal */}
         <Modal
@@ -2025,10 +2098,30 @@ const styles = StyleSheet.create({
   },
   infoButton: {
     position: 'absolute',
-    right: 20,
+    left: 20,
     top: Platform.OS === 'ios' ? 60 : 8,
     padding: 8,
     zIndex: 10,
+  },
+  premiumButton: {
+    position: 'absolute',
+    right: 20,
+    top: Platform.OS === 'ios' ? 60 : 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    zIndex: 10,
+  },
+  premiumButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFD700',
   },
   bannerText: {
     fontSize: 24,
@@ -2059,7 +2152,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 120, // Extra padding for ad banner
   },
   gameContainer: {
     flex: 1,
@@ -2155,10 +2248,10 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   createButton: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 16,
     padding: 20,
@@ -2171,6 +2264,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
+  },
+  createButtonSubtext: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   joinButton: {
     flexDirection: 'row',

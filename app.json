@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Bingo MeTis",
@@ -22,6 +23,12 @@
         ],
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationPortrait"
+        ],
+        "GADApplicationIdentifier": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
         ]
       }
     },
@@ -41,9 +48,17 @@
     "plugins": [
       "expo-font",
       "expo-router",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-superwall",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+          "iosAppId": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"
+        }
+      ]
     ],
-    "scheme": "natively",
+    "scheme": "Bingo MeTis",
     "experiments": {
       "typedRoutes": true
     },

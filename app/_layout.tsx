@@ -16,6 +16,7 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
+import { PremiumProvider } from "@/contexts/PremiumContext";
 // Note: Error logging is auto-initialized via index.ts import
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -84,58 +85,69 @@ export default function RootLayout() {
         <ThemeProvider
           value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
         >
-          <WidgetProvider>
-            <GestureHandlerRootView>
-            <Stack>
-              {/* Main app with tabs */}
-              <Stack.Screen 
-                name="(tabs)" 
-                options={{ 
-                  headerShown: false,
-                  headerBackTitle: ''
-                }} 
-              />
-              
-              {/* Modal screens outside tabs */}
-              <Stack.Screen 
-                name="create-theme" 
-                options={{ 
-                  headerShown: false,
-                  headerBackTitle: '',
-                  presentation: 'card'
-                }} 
-              />
-              
-              <Stack.Screen 
-                name="join-game" 
-                options={{ 
-                  headerShown: false,
-                  headerBackTitle: '',
-                  presentation: 'card'
-                }} 
-              />
-              
-              <Stack.Screen 
-                name="history" 
-                options={{ 
-                  headerShown: false,
-                  headerBackTitle: '',
-                  presentation: 'card'
-                }} 
-              />
-              
-              <Stack.Screen 
-                name="admin-upload" 
-                options={{ 
-                  headerShown: false,
-                  headerBackTitle: '',
-                  presentation: 'card'
-                }} 
-              />
-            </Stack>
-            <SystemBars style={"auto"} />
-            </GestureHandlerRootView>
-          </WidgetProvider>
+          <PremiumProvider>
+            <WidgetProvider>
+              <GestureHandlerRootView>
+              <Stack>
+                {/* Main app with tabs */}
+                <Stack.Screen 
+                  name="(tabs)" 
+                  options={{ 
+                    headerShown: false,
+                    headerBackTitle: ''
+                  }} 
+                />
+                
+                {/* Modal screens outside tabs */}
+                <Stack.Screen 
+                  name="create-theme" 
+                  options={{ 
+                    headerShown: false,
+                    headerBackTitle: '',
+                    presentation: 'card'
+                  }} 
+                />
+                
+                <Stack.Screen 
+                  name="join-game" 
+                  options={{ 
+                    headerShown: false,
+                    headerBackTitle: '',
+                    presentation: 'card'
+                  }} 
+                />
+                
+                <Stack.Screen 
+                  name="history" 
+                  options={{ 
+                    headerShown: false,
+                    headerBackTitle: '',
+                    presentation: 'card'
+                  }} 
+                />
+                
+                <Stack.Screen 
+                  name="admin-upload" 
+                  options={{ 
+                    headerShown: false,
+                    headerBackTitle: '',
+                    presentation: 'card'
+                  }} 
+                />
+
+                <Stack.Screen 
+                  name="premium" 
+                  options={{ 
+                    headerShown: false,
+                    headerBackTitle: '',
+                    presentation: 'card'
+                  }} 
+                />
+              </Stack>
+              <SystemBars style={"auto"} />
+              </GestureHandlerRootView>
+            </WidgetProvider>
+          </PremiumProvider>
         </ThemeProvider>
     </>
   );
