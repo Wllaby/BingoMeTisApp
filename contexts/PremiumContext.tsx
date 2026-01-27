@@ -1,5 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
+import { colors } from '@/styles/commonStyles';
+import Constants from 'expo-constants';
 import { 
   SuperwallProvider, 
   useUser, 
@@ -8,8 +11,6 @@ import {
   SuperwallLoaded,
   SuperwallError
 } from 'expo-superwall';
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
-import { colors } from '@/styles/commonStyles';
 
 interface PremiumContextType {
   isPremium: boolean;
@@ -22,11 +23,44 @@ const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 // Superwall API key from your dashboard
 const SUPERWALL_API_KEY = 'pk_QrtKh8s4cybt_M4lx7gg1';
 
+// Check if we're running in Expo Go (which doesn't support custom native modules)
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Mock implementation for Expo Go
+function MockPremiumProvider({ children }: { children: ReactNode }) {
+  const [isPremium] = useState(false);
+  const [isLoading] = useState(false);
+
+  useEffect(() => {
+    console.log('PremiumContext: Running in mock mode (Expo Go or Superwall unavailable)');
+  }, []);
+
+  const showPaywall = useCallback(async () => {
+    console.log('PremiumContext: Mock paywall - would show upgrade screen');
+  }, []);
+
+  const value: PremiumContextType = useMemo(() => ({
+    isPremium,
+    showPaywall,
+    isLoading
+  }), [isPremium, showPaywall, isLoading]);
+
+  return (
+    <PremiumContext.Provider value={value}>
+      {children}
+    </PremiumContext.Provider>
+  );
+}
+
+// Real Superwall implementation
 function PremiumProviderInner({ children }: { children: ReactNode }) {
-  const { subscriptionStatus } = useUser();
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ALWAYS call hooks unconditionally at the top level
+  const user = useUser();
+  const subscriptionStatus = user?.subscriptionStatus;
+  
   // Memoize the placement configuration to prevent recreating on every render
   const placementConfig = useMemo(() => ({
     onPresent: (info: any) => {
@@ -44,7 +78,8 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     }
   }), []);
 
-  const { registerPlacement } = usePlacement(placementConfig);
+  const placement = usePlacement(placementConfig);
+  const registerPlacement = placement?.registerPlacement;
 
   useEffect(() => {
     console.log('Superwall: Subscription status changed', subscriptionStatus);
@@ -61,12 +96,14 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
   const showPaywall = useCallback(async () => {
     console.log('Superwall: Showing paywall for premium_upgrade placement');
     try {
-      await registerPlacement({
-        placement: 'premium_upgrade',
-        feature: () => {
-          console.log('Superwall: User has premium access');
-        }
-      });
+      if (registerPlacement) {
+        await registerPlacement({
+          placement: 'premium_upgrade',
+          feature: () => {
+            console.log('Superwall: User has premium access');
+          }
+        });
+      }
     } catch (error) {
       console.error('Superwall: Error showing paywall', error);
     }
@@ -86,10 +123,17 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
 }
 
 export function PremiumProvider({ children }: { children: ReactNode }) {
+  // If we're in Expo Go, use mock implementation
+  if (isExpoGo) {
+    console.log('PremiumProvider: Using mock mode (Expo Go)');
+    return <MockPremiumProvider>{children}</MockPremiumProvider>;
+  }
+
+  // Use real Superwall provider
   return (
     <SuperwallProvider 
       apiKey={SUPERWALL_API_KEY}
-      onConfigurationError={(error) => {
+      onConfigurationError={(error: any) => {
         console.error('Superwall: Configuration error', error);
       }}
     >
@@ -101,10 +145,10 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       </SuperwallLoading>
 
       <SuperwallError>
-        {(error) => (
+        {(error: any) => (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Failed to initialize payment system</Text>
-            <Text style={styles.errorSubtext}>{error}</Text>
+            <Text style={styles.errorSubtext}>{String(error)}</Text>
           </View>
         )}
       </SuperwallError>

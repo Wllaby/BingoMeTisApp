@@ -1,34 +1,42 @@
 
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { usePremium } from '@/contexts/PremiumContext';
+import Constants from 'expo-constants';
+import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
+
+// Check if we're running in Expo Go
+const isExpoGo = Constants.appOwnership === 'expo';
 
 // AdMob ad unit IDs from Google AdMob console
-const AD_UNIT_ID = __DEV__ 
-  ? TestIds.INTERSTITIAL 
-  : Platform.select({
-      ios: 'ca-app-pub-5783177820090411/2802142638',
-      android: 'ca-app-pub-5783177820090411/8643127250',
-      default: TestIds.INTERSTITIAL
-    });
+const getAdUnitId = () => {
+  return __DEV__ 
+    ? TestIds.INTERSTITIAL 
+    : Platform.select({
+        ios: 'ca-app-pub-5783177820090411/2802142638',
+        android: 'ca-app-pub-5783177820090411/8643127250',
+        default: TestIds.INTERSTITIAL
+      });
+};
 
-let interstitialAd: InterstitialAd | null = null;
+let interstitialAd: any = null;
 let isAdLoaded = false;
 let gameCompletionCount = 0;
 const GAMES_BEFORE_AD = 3; // Show ad every 3 games
 
 export function useInterstitialAd() {
   const { isPremium } = usePremium();
-  const adRef = useRef<InterstitialAd | null>(null);
+  const adRef = useRef<any>(null);
 
   useEffect(() => {
-    if (isPremium) {
-      console.log('InterstitialAdManager: User is premium, not loading ads');
+    if (isPremium || isExpoGo) {
+      console.log('InterstitialAdManager: Not loading ads - isPremium:', isPremium, 'isExpoGo:', isExpoGo);
       return;
     }
 
     console.log('InterstitialAdManager: Initializing interstitial ad');
+    
+    const AD_UNIT_ID = getAdUnitId();
     
     // Create and load the interstitial ad
     const ad = InterstitialAd.createForAdRequest(AD_UNIT_ID, {
@@ -41,7 +49,7 @@ export function useInterstitialAd() {
       isAdLoaded = true;
     });
 
-    const errorListener = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+    const errorListener = ad.addAdEventListener(AdEventType.ERROR, (error: any) => {
       console.error('InterstitialAdManager: Ad failed to load', error);
       isAdLoaded = false;
     });
@@ -69,8 +77,8 @@ export function useInterstitialAd() {
   }, [isPremium]);
 
   const showInterstitialAd = async () => {
-    if (isPremium) {
-      console.log('InterstitialAdManager: User is premium, not showing ad');
+    if (isPremium || isExpoGo) {
+      console.log('InterstitialAdManager: Not showing ad - isPremium:', isPremium, 'isExpoGo:', isExpoGo);
       return;
     }
 
