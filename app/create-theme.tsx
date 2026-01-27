@@ -65,6 +65,7 @@ export default function CreateThemeScreen() {
   useEffect(() => {
     console.log('CreateThemeScreen: Checking custom theme count');
     checkCustomThemeCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkCustomThemeCount = async () => {
