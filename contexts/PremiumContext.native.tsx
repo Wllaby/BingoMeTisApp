@@ -56,6 +56,7 @@ let SuperwallError: any;
 // Dynamically import Superwall only if NOT in Expo Go
 if (!isExpoGo) {
   try {
+    // Import using ES6 import syntax (converted at build time)
     const SuperwallModule = require('expo-superwall');
     SuperwallProvider = SuperwallModule.SuperwallProvider;
     useUser = SuperwallModule.useUser;
@@ -75,7 +76,8 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // ALWAYS call hooks unconditionally at the top level
-  const user = useUser ? useUser() : null;
+  // These hooks are safe because this component is only rendered when Superwall is available
+  const user = useUser();
   const subscriptionStatus = user?.subscriptionStatus;
   
   // Memoize the placement configuration to prevent recreating on every render
@@ -95,7 +97,7 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     }
   }), []);
 
-  const placement = usePlacement ? usePlacement(placementConfig) : null;
+  const placement = usePlacement(placementConfig);
   const registerPlacement = placement?.registerPlacement;
 
   useEffect(() => {
