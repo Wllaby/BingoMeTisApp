@@ -31,6 +31,7 @@ import { captureRef } from 'react-native-view-shot';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useInterstitialAd } from '@/components/InterstitialAdManager';
 import { AdBanner } from '@/components/AdBanner';
+import { apiPost } from '@/utils/api';
 
 const { width, height } = Dimensions.get('window');
 const CELL_SIZE = (width - 40) / 5;
@@ -1294,30 +1295,12 @@ function HomeScreen() {
     try {
       setSendingFeedback(true);
 
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        setSendingFeedback(false);
-        return;
-      }
-
       console.log('HomeScreen: Sending feedback to backend');
-      const response = await fetch(`${BACKEND_URL}/feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: trimmedMessage,
-          email: feedbackEmail.trim() || undefined,
-        }),
+      const data = await apiPost('/feedback', {
+        message: trimmedMessage,
+        email: feedbackEmail.trim() || undefined,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       console.log('HomeScreen: Feedback sent successfully', data);
 
       if (Platform.OS !== 'web') {
@@ -1754,6 +1737,24 @@ function HomeScreen() {
                   color={colors.primary} 
                 />
                 <Text style={styles.infoOptionText}>More information</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.infoOptionButton}
+                onPress={() => {
+                  console.log('HomeScreen: View feedback option selected');
+                  setShowInfoModal(false);
+                  router.push('/admin-feedback');
+                }}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="tray.fill" 
+                  android_material_icon_name="inbox"
+                  size={24} 
+                  color={colors.primary} 
+                />
+                <Text style={styles.infoOptionText}>View all feedback</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
