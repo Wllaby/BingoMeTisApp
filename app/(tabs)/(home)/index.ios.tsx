@@ -1711,24 +1711,6 @@ function HomeScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.infoOptionButton}
-                onPress={() => {
-                  console.log('HomeScreen: View feedback option selected');
-                  setShowInfoModal(false);
-                  router.push('/admin-feedback');
-                }}
-                activeOpacity={0.7}
-              >
-                <IconSymbol 
-                  ios_icon_name="tray.fill" 
-                  android_material_icon_name="inbox"
-                  size={24} 
-                  color={colors.primary} 
-                />
-                <Text style={styles.infoOptionText}>View all feedback</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonSecondary]}
                 onPress={() => setShowInfoModal(false)}
                 activeOpacity={0.7}
