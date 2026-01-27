@@ -1341,7 +1341,8 @@ function HomeScreen() {
     
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    await showPaywall();
+    // Navigate to the premium screen
+    router.push('/premium');
   };
 
   const toggleCustomThemesExpanded = () => {
