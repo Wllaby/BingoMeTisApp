@@ -100,7 +100,7 @@ export default function PremiumScreen() {
                 size={24} 
                 color="#4CAF50"
               />
-              <Text style={styles.featureText}>Unlimited active games</Text>
+              <Text style={styles.featureText}>Up to 30 active games</Text>
             </View>
 
             <View style={styles.featureItem}>
@@ -110,7 +110,17 @@ export default function PremiumScreen() {
                 size={24} 
                 color="#4CAF50"
               />
-              <Text style={styles.featureText}>Create up to 30 custom themes</Text>
+              <Text style={styles.featureText}>Create unlimited custom themes</Text>
+            </View>
+
+            <View style={styles.featureItem}>
+              <IconSymbol 
+                ios_icon_name="checkmark.circle.fill" 
+                android_material_icon_name="check-circle"
+                size={24} 
+                color="#4CAF50"
+              />
+              <Text style={styles.featureText}>Use existing themes as templates</Text>
             </View>
 
             <View style={styles.featureItem}>
@@ -121,26 +131,6 @@ export default function PremiumScreen() {
                 color="#4CAF50"
               />
               <Text style={styles.featureText}>No ads</Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check-circle"
-                size={24} 
-                color="#4CAF50"
-              />
-              <Text style={styles.featureText}>Priority support</Text>
-            </View>
-
-            <View style={styles.featureItem}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check-circle"
-                size={24} 
-                color="#4CAF50"
-              />
-              <Text style={styles.featureText}>Early access to new features</Text>
             </View>
           </View>
 

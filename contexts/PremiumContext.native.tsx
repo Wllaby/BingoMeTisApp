@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { ActivityIndicator, View, Text, StyleSheet, Platform } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 
 interface PremiumContextType {
   isPremium: boolean;
@@ -28,8 +29,13 @@ export function MockPremiumProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showPaywall = useCallback(async () => {
-    console.log('PremiumContext: Mock paywall - would show upgrade screen in production build');
-    console.log('PremiumContext: To test payments, create a development build with: npx expo run:ios or npx expo run:android');
+    console.log('PremiumContext: Mock paywall - navigating to premium screen');
+    console.log('PremiumContext: Note - To test real Superwall payments, create a development build:');
+    console.log('  iOS: npx expo run:ios');
+    console.log('  Android: npx expo run:android');
+    
+    // Navigate to the premium screen in Expo Go
+    router.push('/premium');
   }, []);
 
   const value: PremiumContextType = useMemo(() => ({
