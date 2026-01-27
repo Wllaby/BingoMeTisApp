@@ -12,15 +12,18 @@ import {
   ImageBackground,
   ImageSourcePropType,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
+import { usePremium } from '@/contexts/PremiumContext';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
-const MAX_CUSTOM_THEMES = 5;
+const MAX_CUSTOM_THEMES_FREE = 5;
+const MAX_CUSTOM_THEMES_PREMIUM = 30;
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -28,10 +31,20 @@ function resolveImageSource(source: string | number | ImageSourcePropType | unde
   return source as ImageSourcePropType;
 }
 
+interface BingoTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  items: string[];
+  is_custom: boolean;
+  created_at: string;
+}
+
 export default function CreateThemeScreen() {
   console.log('CreateThemeScreen: Component mounted');
   
   const router = useRouter();
+  const { isPremium } = usePremium();
   const [themeName, setThemeName] = useState('');
   const [themeDescription, setThemeDescription] = useState('');
   const [options, setOptions] = useState<string[]>([]);
@@ -41,8 +54,13 @@ export default function CreateThemeScreen() {
   const [loading, setLoading] = useState(true);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState<BingoTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const backgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
+
+  const maxCustomThemes = isPremium ? MAX_CUSTOM_THEMES_PREMIUM : MAX_CUSTOM_THEMES_FREE;
 
   useEffect(() => {
     console.log('CreateThemeScreen: Checking custom theme count');
@@ -78,11 +96,12 @@ export default function CreateThemeScreen() {
       setCustomThemeCount(customCount);
       setLoading(false);
 
-      if (customCount >= MAX_CUSTOM_THEMES) {
+      if (customCount >= maxCustomThemes) {
         console.log('CreateThemeScreen: User has reached maximum custom themes');
+        const limitText = maxCustomThemes.toString();
         Alert.alert(
           'Maximum Custom Themes Reached',
-          `You can only have ${MAX_CUSTOM_THEMES} custom themes at the same time. Please delete one of your existing custom themes to create a new one.`,
+          `You can only have ${limitText} custom themes at the same time. Please delete one of your existing custom themes to create a new one.`,
           [
             {
               text: 'OK',
@@ -98,6 +117,99 @@ export default function CreateThemeScreen() {
       console.error('CreateThemeScreen: Error checking custom theme count', error);
       setLoading(false);
     }
+  };
+
+  const loadTemplates = async () => {
+    try {
+      setLoadingTemplates(true);
+      
+      if (!BACKEND_URL) {
+        console.error('CreateThemeScreen: BACKEND_URL is not configured');
+        setLoadingTemplates(false);
+        return;
+      }
+
+      console.log('CreateThemeScreen: Fetching templates for template selection');
+      const response = await fetch(`${BACKEND_URL}/templates`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
+      
+      const transformedTemplates: BingoTemplate[] = templatesArray.map((template: any) => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        items: template.items,
+        is_custom: template.isCustom || template.is_custom,
+        created_at: template.createdAt || template.created_at,
+      }));
+      
+      setTemplates(transformedTemplates);
+      setLoadingTemplates(false);
+    } catch (error) {
+      console.error('CreateThemeScreen: Error loading templates', error);
+      setLoadingTemplates(false);
+      Alert.alert('Error', 'Failed to load templates. Please try again.');
+    }
+  };
+
+  const handleUseTemplate = () => {
+    console.log('CreateThemeScreen: Use template button tapped');
+    
+    if (!isPremium) {
+      Alert.alert(
+        'Premium Feature',
+        'Using existing themes as templates is a Premium feature. Upgrade to Premium to unlock this feature!',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Upgrade',
+            onPress: () => {
+              router.push('/premium');
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
+    loadTemplates();
+    setShowTemplateModal(true);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const selectTemplate = (template: BingoTemplate) => {
+    console.log('CreateThemeScreen: Template selected:', template.name);
+    
+    // Copy the template items to the options
+    setOptions([...template.items]);
+    setShowTemplateModal(false);
+    
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    
+    const itemsCount = template.items.length.toString();
+    Alert.alert(
+      'Template Loaded',
+      `${itemsCount} items from "${template.name}" have been loaded. You can now edit, add, or remove items as needed.`,
+      [{ text: 'OK' }]
+    );
   };
 
   const addOption = () => {
@@ -194,11 +306,12 @@ export default function CreateThemeScreen() {
     console.log('CreateThemeScreen: Theme name:', themeName);
     console.log('CreateThemeScreen: Total options:', options.length);
     
-    if (customThemeCount >= MAX_CUSTOM_THEMES) {
+    if (customThemeCount >= maxCustomThemes) {
       console.log('CreateThemeScreen: Cannot save - maximum custom themes reached');
+      const limitText = maxCustomThemes.toString();
       Alert.alert(
         'Maximum Custom Themes Reached',
-        `You can only have ${MAX_CUSTOM_THEMES} custom themes at the same time. Please delete one of your existing custom themes to create a new one.`,
+        `You can only have ${limitText} custom themes at the same time. Please delete one of your existing custom themes to create a new one.`,
         [{ text: 'OK' }]
       );
       return;
@@ -326,7 +439,7 @@ export default function CreateThemeScreen() {
     );
   }
 
-  if (customThemeCount >= MAX_CUSTOM_THEMES) {
+  if (customThemeCount >= maxCustomThemes) {
     return null;
   }
 
@@ -410,6 +523,32 @@ export default function CreateThemeScreen() {
             {options.length < 25 && (
               <Text style={styles.helperText}>Add at least {remainingText} more options</Text>
             )}
+
+            <TouchableOpacity
+              style={styles.templateButton}
+              onPress={handleUseTemplate}
+              activeOpacity={0.7}
+            >
+              <IconSymbol 
+                ios_icon_name="doc.on.doc.fill" 
+                android_material_icon_name="content-copy"
+                size={20} 
+                color={isPremium ? colors.primary : colors.textSecondary} 
+              />
+              <Text style={[styles.templateButtonText, !isPremium && styles.templateButtonTextDisabled]}>
+                Use Existing Theme as Template
+              </Text>
+              {!isPremium && (
+                <View style={styles.premiumBadge}>
+                  <IconSymbol 
+                    ios_icon_name="crown.fill" 
+                    android_material_icon_name="workspace-premium"
+                    size={16} 
+                    color="#FFD700" 
+                  />
+                </View>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.addOptionContainer}>
               <TextInput
@@ -548,6 +687,70 @@ export default function CreateThemeScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Template Selection Modal */}
+      <Modal
+        visible={showTemplateModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowTemplateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.templateModalContent}>
+            <View style={styles.templateModalHeader}>
+              <Text style={styles.templateModalTitle}>Select a Template</Text>
+              <TouchableOpacity
+                onPress={() => setShowTemplateModal(false)}
+                style={styles.closeButton}
+                activeOpacity={0.7}
+              >
+                <IconSymbol 
+                  ios_icon_name="xmark.circle.fill" 
+                  android_material_icon_name="cancel"
+                  size={28} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
+
+            {loadingTemplates ? (
+              <View style={styles.templateLoadingContainer}>
+                <Text style={styles.templateLoadingText}>Loading templates...</Text>
+              </View>
+            ) : (
+              <ScrollView 
+                style={styles.templateList}
+                contentContainerStyle={styles.templateListContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {templates.map((template) => {
+                  const templateKey = template.id;
+                  const itemsCountText = template.items.length.toString();
+                  
+                  return (
+                    <TouchableOpacity
+                      key={templateKey}
+                      style={styles.templateItem}
+                      onPress={() => selectTemplate(template)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.templateItemContent}>
+                        <Text style={styles.templateItemName}>{template.name}</Text>
+                        {template.is_custom && (
+                          <View style={styles.customTemplateBadge}>
+                            <Text style={styles.customTemplateBadgeText}>Custom</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.templateItemCount}>{itemsCountText} items</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -676,6 +879,29 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
+  templateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  templateButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  templateButtonTextDisabled: {
+    color: colors.textSecondary,
+  },
+  premiumBadge: {
+    marginLeft: 4,
+  },
   addOptionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -783,5 +1009,81 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.card,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  templateModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  templateModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  templateModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  templateLoadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  templateLoadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  templateList: {
+    flex: 1,
+  },
+  templateListContent: {
+    padding: 20,
+  },
+  templateItem: {
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  templateItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  templateItemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    flex: 1,
+  },
+  customTemplateBadge: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  customTemplateBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  templateItemCount: {
+    fontSize: 14,
+    color: colors.textSecondary,
   },
 });

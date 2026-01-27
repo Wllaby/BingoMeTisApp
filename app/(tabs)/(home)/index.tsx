@@ -38,8 +38,11 @@ const CELL_SIZE = (width - 40) / 5;
 // Get backend URL from app.json configuration
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
 
-// Maximum custom themes for free users
+// Maximum custom themes and active games based on premium status
 const MAX_CUSTOM_THEMES_FREE = 5;
+const MAX_CUSTOM_THEMES_PREMIUM = 30;
+const MAX_ACTIVE_GAMES_FREE = 5;
+const MAX_ACTIVE_GAMES_PREMIUM = 30;
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -354,6 +357,8 @@ export default function HomeScreen() {
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [customThemesExpanded, setCustomThemesExpanded] = useState(false);
+  const [activeGamesExpanded, setActiveGamesExpanded] = useState(false);
 
   const defaultBackgroundImage = resolveImageSource(require('@/assets/images/870c87ab-379a-4f2d-baa7-d28d11e105ff.webp'));
   const customThemeBackgroundImage = resolveImageSource(require('@/assets/images/6f6e38ff-0de3-4f6d-8445-d6b679cf5b72.webp'));
@@ -411,6 +416,10 @@ export default function HomeScreen() {
     : isTeenAngstersTheme 
     ? teenangstersBackgroundImage 
     : defaultBackgroundImage;
+
+  // Calculate limits based on premium status
+  const maxCustomThemes = isPremium ? MAX_CUSTOM_THEMES_PREMIUM : MAX_CUSTOM_THEMES_FREE;
+  const maxActiveGames = isPremium ? MAX_ACTIVE_GAMES_PREMIUM : MAX_ACTIVE_GAMES_FREE;
 
   // Load templates and active games on mount
   useEffect(() => {
@@ -573,12 +582,23 @@ export default function HomeScreen() {
       return;
     }
     
-    // Check if user already has 5 active games
-    if (activeGames.length >= 5) {
+    // Check if user has reached the limit for active games
+    if (activeGames.length >= maxActiveGames) {
+      const limitText = maxActiveGames.toString();
       Alert.alert(
         'Maximum Active Games',
-        'You can only have 5 games active at the same time. Please complete or delete one of the current ones first.',
-        [{ text: 'OK' }]
+        `You can only have ${limitText} games active at the same time. ${!isPremium ? 'Upgrade to Premium for up to 30 active games, or ' : ''}Please complete or delete one of the current ones first.`,
+        [
+          {
+            text: 'OK'
+          },
+          ...(!isPremium ? [{
+            text: 'Upgrade',
+            onPress: () => {
+              router.push('/premium');
+            }
+          }] : [])
+        ]
       );
       return;
     }
@@ -1330,23 +1350,24 @@ export default function HomeScreen() {
   const handleCreateTheme = () => {
     console.log('HomeScreen: Create your own theme tapped');
     
-    // Check if user has reached the limit for free users
+    // Check if user has reached the limit
     const customTemplates = templates.filter(t => t.is_custom);
-    if (!isPremium && customTemplates.length >= MAX_CUSTOM_THEMES_FREE) {
+    if (customTemplates.length >= maxCustomThemes) {
+      const limitText = maxCustomThemes.toString();
       Alert.alert(
-        'Upgrade to Premium',
-        `Free users can create up to ${MAX_CUSTOM_THEMES_FREE} custom themes. Upgrade to Premium for unlimited custom themes!`,
+        'Maximum Custom Themes',
+        `${isPremium ? 'You have reached the maximum of' : 'Free users can create up to'} ${limitText} custom themes. ${!isPremium ? 'Upgrade to Premium for up to 30 custom themes!' : 'Please delete one of your existing custom themes to create a new one.'}`,
         [
           {
             text: 'Cancel',
             style: 'cancel'
           },
-          {
+          ...(!isPremium ? [{
             text: 'Upgrade',
             onPress: () => {
               router.push('/premium');
             }
-          }
+          }] : [])
         ]
       );
       return;
@@ -1363,6 +1384,22 @@ export default function HomeScreen() {
     }
     
     router.push('/premium');
+  };
+
+  const toggleCustomThemesExpanded = () => {
+    console.log('HomeScreen: Toggling custom themes expanded');
+    setCustomThemesExpanded(!customThemesExpanded);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const toggleActiveGamesExpanded = () => {
+    console.log('HomeScreen: Toggling active games expanded');
+    setActiveGamesExpanded(!activeGamesExpanded);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   if (loading) {
@@ -1393,6 +1430,16 @@ export default function HomeScreen() {
     const customTemplates = templates.filter(t => t.is_custom);
     const hasCustomTemplates = customTemplates.length > 0;
     const hasActiveGames = activeGames.length > 0;
+    
+    // Determine which custom themes to show
+    const displayedCustomThemes = customThemesExpanded || customTemplates.length <= 5 
+      ? customTemplates 
+      : customTemplates.slice(0, 5);
+    
+    // Determine which active games to show
+    const displayedActiveGames = activeGamesExpanded || activeGames.length <= 5 
+      ? activeGames 
+      : activeGames.slice(0, 5);
     
     // Get standard templates and filter out old theme names
     const standardTemplates = templates.filter(t => !t.is_custom);
@@ -1435,6 +1482,11 @@ export default function HomeScreen() {
     });
     
     console.log('HomeScreen: Displaying', sortedStandardTemplates.length, 'unique standard themes');
+    
+    const customThemesCountText = customTemplates.length.toString();
+    const maxCustomThemesText = maxCustomThemes.toString();
+    const activeGamesCountText = activeGames.length.toString();
+    const maxActiveGamesText = maxActiveGames.toString();
     
     return (
       <View style={styles.container}>
@@ -1511,10 +1563,13 @@ export default function HomeScreen() {
             {hasCustomTemplates && (
               <React.Fragment>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Custom themes and games</Text>
+                  <Text style={styles.sectionTitle}>Custom themes</Text>
+                  <Text style={styles.sectionCount}>{customThemesCountText}</Text>
+                  <Text style={styles.sectionCountSeparator}>/</Text>
+                  <Text style={styles.sectionCountMax}>{maxCustomThemesText}</Text>
                 </View>
 
-                {customTemplates.map((template) => {
+                {displayedCustomThemes.map((template) => {
                   const templateKey = template.id;
                   return (
                     <SwipeableCustomTheme
@@ -1526,6 +1581,24 @@ export default function HomeScreen() {
                     />
                   );
                 })}
+
+                {customTemplates.length > 5 && (
+                  <TouchableOpacity
+                    style={styles.expandButton}
+                    onPress={toggleCustomThemesExpanded}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.expandButtonText}>
+                      {customThemesExpanded ? 'Show Less' : `Show All (${customThemesCountText})`}
+                    </Text>
+                    <IconSymbol 
+                      ios_icon_name={customThemesExpanded ? "chevron.up" : "chevron.down"}
+                      android_material_icon_name={customThemesExpanded ? "expand-less" : "expand-more"}
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                  </TouchableOpacity>
+                )}
               </React.Fragment>
             )}
 
@@ -1533,9 +1606,12 @@ export default function HomeScreen() {
               <React.Fragment>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Active games</Text>
+                  <Text style={styles.sectionCount}>{activeGamesCountText}</Text>
+                  <Text style={styles.sectionCountSeparator}>/</Text>
+                  <Text style={styles.sectionCountMax}>{maxActiveGamesText}</Text>
                 </View>
 
-                {activeGames.map((game) => {
+                {displayedActiveGames.map((game) => {
                   const gameKey = game.id;
                   
                   return (
@@ -1547,6 +1623,24 @@ export default function HomeScreen() {
                     />
                   );
                 })}
+
+                {activeGames.length > 5 && (
+                  <TouchableOpacity
+                    style={styles.expandButton}
+                    onPress={toggleActiveGamesExpanded}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.expandButtonText}>
+                      {activeGamesExpanded ? 'Show Less' : `Show All (${activeGamesCountText})`}
+                    </Text>
+                    <IconSymbol 
+                      ios_icon_name={activeGamesExpanded ? "chevron.up" : "chevron.down"}
+                      android_material_icon_name={activeGamesExpanded ? "expand-less" : "expand-more"}
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                  </TouchableOpacity>
+                )}
               </React.Fragment>
             )}
 
@@ -1562,9 +1656,9 @@ export default function HomeScreen() {
                 color={colors.primary} 
               />
               <Text style={styles.createButtonText}>Create your own theme</Text>
-              {!isPremium && customTemplates.length > 0 && (
+              {customTemplates.length > 0 && (
                 <Text style={styles.createButtonSubtext}>
-                  {customTemplates.length}/{MAX_CUSTOM_THEMES_FREE} free themes used
+                  {customThemesCountText}/{maxCustomThemesText} themes used
                 </Text>
               )}
             </TouchableOpacity>
@@ -2185,6 +2279,8 @@ const styles = StyleSheet.create({
   sectionHeader: {
     marginTop: 32,
     marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   sectionTitle: {
     fontSize: 22,
@@ -2193,6 +2289,30 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
+  },
+  sectionCount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.accent,
+    marginLeft: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  sectionCountSeparator: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    marginHorizontal: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  sectionCountMax: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   templateCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.75)',
@@ -2243,6 +2363,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   playText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  expandButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  expandButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
