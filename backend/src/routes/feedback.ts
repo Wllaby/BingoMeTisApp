@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { Resend } from "resend";
+import { desc } from "drizzle-orm";
 import * as schema from "../db/schema.js";
 import type { App } from "../index.js";
 
@@ -67,6 +68,24 @@ export function register(app: App, fastify: FastifyInstance) {
       return { success: true, message: 'Feedback sent successfully' };
     } catch (error) {
       app.logger.error({ err: error, body }, 'Failed to submit feedback');
+      throw error;
+    }
+  });
+
+  // GET /api/feedback - Retrieve all feedback entries
+  fastify.get('/feedback', async (request, reply) => {
+    app.logger.info({}, 'Fetching all feedback entries');
+
+    try {
+      const feedbackEntries = await app.db
+        .select()
+        .from(schema.feedback)
+        .orderBy(desc(schema.feedback.createdAt));
+
+      app.logger.info({ count: feedbackEntries.length }, 'Successfully fetched feedback entries');
+      return feedbackEntries;
+    } catch (error) {
+      app.logger.error({ err: error }, 'Failed to fetch feedback entries');
       throw error;
     }
   });
