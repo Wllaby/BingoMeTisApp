@@ -1377,14 +1377,14 @@ function HomeScreen() {
   };
 
   const handleGoPremium = async () => {
-    console.log('HomeScreen: Go Premium button tapped');
+    console.log('HomeScreen: Go Premium button tapped - showing Superwall paywall');
     
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     
-    // Navigate to the premium screen
-    router.push('/premium');
+    // Show the Superwall paywall directly
+    await showPaywall();
   };
 
   const toggleCustomThemesExpanded = () => {
