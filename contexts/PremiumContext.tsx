@@ -27,21 +27,24 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { registerPlacement } = usePlacement({
-    onPresent: (info) => {
+  // Move usePlacement configuration to a stable reference
+  const placementConfig = {
+    onPresent: (info: any) => {
       console.log('Superwall: Paywall presented', info);
     },
-    onDismiss: (info, result) => {
+    onDismiss: (info: any, result: any) => {
       console.log('Superwall: Paywall dismissed', info, result);
       // Check subscription status after dismissal
       if (result === 'purchased' || result === 'restored') {
         console.log('Superwall: User purchased or restored subscription');
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Superwall: Paywall error', error);
     }
-  });
+  };
+
+  const { registerPlacement } = usePlacement(placementConfig);
 
   useEffect(() => {
     console.log('Superwall: Subscription status changed', subscriptionStatus);
