@@ -4,12 +4,12 @@ import { Platform } from 'react-native';
 import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { usePremium } from '@/contexts/PremiumContext';
 
-// Replace with your actual AdMob ad unit IDs from Google AdMob console
+// AdMob ad unit IDs from Google AdMob console
 const AD_UNIT_ID = __DEV__ 
   ? TestIds.INTERSTITIAL 
   : Platform.select({
-      ios: 'ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ',
-      android: 'ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ',
+      ios: 'ca-app-pub-5783177820090411/2802142638',
+      android: 'ca-app-pub-5783177820090411/8643127250',
       default: TestIds.INTERSTITIAL
     });
 

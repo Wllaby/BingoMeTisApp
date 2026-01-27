@@ -9,7 +9,7 @@ const AD_UNIT_ID = __DEV__
   ? TestIds.ADAPTIVE_BANNER 
   : Platform.select({
       ios: 'ca-app-pub-5783177820090411/5553929484',
-      android: 'ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY',
+      android: 'ca-app-pub-5783177820090411/2680354135',
       default: TestIds.ADAPTIVE_BANNER
     });
 
