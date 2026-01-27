@@ -330,7 +330,7 @@ function SwipeableActiveGame({ game, onPress, onDelete }: SwipeableActiveGamePro
   );
 }
 
-export default function HomeScreen() {
+function HomeScreen() {
   console.log('HomeScreen: Component mounted');
   
   const router = useRouter();
@@ -2174,6 +2174,8 @@ export default function HomeScreen() {
     </View>
   );
 }
+
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {
