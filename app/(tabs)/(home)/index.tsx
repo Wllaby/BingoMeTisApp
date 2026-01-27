@@ -594,8 +594,8 @@ function HomeScreen() {
           },
           ...(!isPremium ? [{
             text: 'Upgrade',
-            onPress: () => {
-              router.push('/premium');
+            onPress: async () => {
+              await showPaywall();
             }
           }] : [])
         ]
@@ -1364,8 +1364,8 @@ function HomeScreen() {
           },
           ...(!isPremium ? [{
             text: 'Upgrade',
-            onPress: () => {
-              router.push('/premium');
+            onPress: async () => {
+              await showPaywall();
             }
           }] : [])
         ]
@@ -1376,14 +1376,14 @@ function HomeScreen() {
     router.push('/create-theme');
   };
 
-  const handleGoPremium = () => {
+  const handleGoPremium = async () => {
     console.log('HomeScreen: Go Premium button tapped');
     
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     
-    router.push('/premium');
+    await showPaywall();
   };
 
   const toggleCustomThemesExpanded = () => {

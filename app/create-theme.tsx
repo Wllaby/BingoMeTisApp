@@ -44,7 +44,7 @@ export default function CreateThemeScreen() {
   console.log('CreateThemeScreen: Component mounted');
   
   const router = useRouter();
-  const { isPremium } = usePremium();
+  const { isPremium, showPaywall } = usePremium();
   const [themeName, setThemeName] = useState('');
   const [themeDescription, setThemeDescription] = useState('');
   const [options, setOptions] = useState<string[]>([]);
@@ -163,7 +163,7 @@ export default function CreateThemeScreen() {
     }
   };
 
-  const handleUseTemplate = () => {
+  const handleUseTemplate = async () => {
     console.log('CreateThemeScreen: Use template button tapped');
     
     if (!isPremium) {
@@ -177,8 +177,8 @@ export default function CreateThemeScreen() {
           },
           {
             text: 'Upgrade',
-            onPress: () => {
-              router.push('/premium');
+            onPress: async () => {
+              await showPaywall();
             }
           }
         ]
