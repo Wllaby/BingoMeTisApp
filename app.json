@@ -70,13 +70,6 @@
           "androidAppId": "ca-app-pub-5783177820090411~6455947613",
           "iosAppId": "ca-app-pub-5783177820090411~8022679724"
         }
-      ],
-      [
-        "expo-superwall",
-        {
-          "iosApiKey": "pk_QrtKh8s4cybt_M4lx7gg1",
-          "androidApiKey": "pk_QrtKh8s4cybt_M4lx7gg1"
-        }
       ]
     ],
     "scheme": "bingometis",
