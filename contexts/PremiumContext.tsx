@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { 
   SuperwallProvider, 
   useUser, 
@@ -27,8 +27,8 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Move usePlacement configuration to a stable reference
-  const placementConfig = {
+  // Memoize the placement configuration to prevent recreating on every render
+  const placementConfig = useMemo(() => ({
     onPresent: (info: any) => {
       console.log('Superwall: Paywall presented', info);
     },
@@ -42,7 +42,7 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     onError: (error: any) => {
       console.error('Superwall: Paywall error', error);
     }
-  };
+  }), []);
 
   const { registerPlacement } = usePlacement(placementConfig);
 
@@ -58,7 +58,7 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, [subscriptionStatus]);
 
-  const showPaywall = async () => {
+  const showPaywall = useCallback(async () => {
     console.log('Superwall: Showing paywall for premium_upgrade placement');
     try {
       await registerPlacement({
@@ -70,13 +70,13 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Superwall: Error showing paywall', error);
     }
-  };
+  }, [registerPlacement]);
 
-  const value: PremiumContextType = {
+  const value: PremiumContextType = useMemo(() => ({
     isPremium,
     showPaywall,
     isLoading
-  };
+  }), [isPremium, showPaywall, isLoading]);
 
   return (
     <PremiumContext.Provider value={value}>
