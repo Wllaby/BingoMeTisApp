@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Bingo MeTis",
@@ -48,13 +49,6 @@
       "expo-font",
       "expo-router",
       "expo-web-browser",
-      [
-        "expo-superwall",
-        {
-          "iosApiKey": "pk_YOUR_IOS_API_KEY_HERE",
-          "androidApiKey": "pk_YOUR_ANDROID_API_KEY_HERE"
-        }
-      ],
       [
         "react-native-google-mobile-ads",
         {
