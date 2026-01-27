@@ -1,210 +1,152 @@
 
 # Monetization Setup Guide
 
-This app now includes **ads** and **premium features** to monetize your bingo game app!
+This app uses **Superwall** for premium subscriptions and **Google AdMob** for ads (free users only).
 
-## 🎯 What's Included
+## 🚨 Important: Expo Go Limitations
 
-### 1. **Ads (Google AdMob)**
-- **Banner Ads**: Displayed at the bottom of the home screen for free users
-- **Interstitial Ads**: Full-screen ads shown every 3 completed games for free users
-- Ads are automatically hidden for premium users
+**Native modules like `expo-superwall` and `react-native-google-mobile-ads` DO NOT work in Expo Go.**
 
-### 2. **Premium Features (Superwall)**
-- **No Ads**: Premium users don't see any advertisements
-- **Unlimited Custom Themes**: Free users limited to 5 custom themes, premium users get unlimited
-- **Priority Support**: Faster response to feedback
-- **Early Access**: First to try new features
+### Why?
+Expo Go is a sandbox app that only includes a predefined set of native modules. Custom native modules (like Superwall and AdMob) require a custom development build.
 
-## 📋 Setup Instructions
+### What happens in Expo Go?
+- ✅ The app runs normally with **mock implementations**
+- ✅ Premium features are simulated (always shows as free user)
+- ✅ Ads are hidden (console logs show "not supported on web/Expo Go")
+- ❌ You **cannot test** actual payments or ads in Expo Go
 
-### Step 1: Google AdMob Setup
+## 🛠️ How to Test Payments & Ads
 
-1. **Create an AdMob Account**
-   - Go to [https://admob.google.com](https://admob.google.com)
-   - Sign in with your Google account
-   - Create a new app for your bingo game
+To test Superwall payments and AdMob ads, you need to create a **development build**:
 
-2. **Get Your Ad Unit IDs**
-   - Create a **Banner Ad Unit** (for bottom banner)
-   - Create an **Interstitial Ad Unit** (for full-screen ads)
-   - Copy the Ad Unit IDs (format: `ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY`)
+### iOS Development Build
+```bash
+npx expo run:ios
+```
 
-3. **Update the Code**
-   
-   **In `components/AdBanner.tsx`**, replace the placeholder:
-   ```typescript
-   const AD_UNIT_ID = __DEV__ 
-     ? TestIds.ADAPTIVE_BANNER 
-     : Platform.select({
-         ios: 'ca-app-pub-YOUR_IOS_BANNER_ID',
-         android: 'ca-app-pub-YOUR_ANDROID_BANNER_ID',
-       });
-   ```
+### Android Development Build
+```bash
+npx expo run:android
+```
 
-   **In `components/InterstitialAdManager.tsx`**, replace the placeholder:
-   ```typescript
-   const AD_UNIT_ID = __DEV__ 
-     ? TestIds.INTERSTITIAL 
-     : Platform.select({
-         ios: 'ca-app-pub-YOUR_IOS_INTERSTITIAL_ID',
-         android: 'ca-app-pub-YOUR_ANDROID_INTERSTITIAL_ID',
-       });
-   ```
+This will:
+1. Install native dependencies (Superwall, AdMob)
+2. Build a custom development client
+3. Install it on your device/simulator
+4. Connect to Metro bundler for fast refresh
 
-4. **Update `app.json`**
-   
-   Replace the placeholder App IDs with your actual AdMob App IDs:
-   ```json
-   {
-     "ios": {
-       "infoPlist": {
-         "GADApplicationIdentifier": "ca-app-pub-YOUR_IOS_APP_ID"
-       }
-     },
-     "plugins": [
-       [
-         "react-native-google-mobile-ads",
-         {
-           "androidAppId": "ca-app-pub-YOUR_ANDROID_APP_ID",
-           "iosAppId": "ca-app-pub-YOUR_IOS_APP_ID"
-         }
-       ]
-     ]
-   }
-   ```
+## 📱 Superwall Configuration
 
-### Step 2: Superwall Setup
+### API Key
+The Superwall API key is configured in `contexts/PremiumContext.native.tsx`:
+```typescript
+const SUPERWALL_API_KEY = 'pk_QrtKh8s4cybt_M4lx7gg1';
+```
 
-1. **Create a Superwall Account**
-   - Go to [https://superwall.com](https://superwall.com)
-   - Sign up for an account
-   - Create a new app
+### Deep Linking
+The app is configured to handle Superwall deep links via the `bingometis://` scheme:
+- iOS: Configured in `app.json` → `ios.infoPlist`
+- Android: Configured in `app.json` → `android.intentFilters`
 
-2. **Configure Your Paywall**
-   - In the Superwall dashboard, create a paywall design
-   - Set up your subscription products (e.g., $4.99/month, $29.99/year)
-   - Create a placement called `premium_upgrade`
+### Paywall Placement
+The paywall is triggered with the placement ID `premium_upgrade`:
+```typescript
+await registerPlacement({
+  placement: 'premium_upgrade',
+  feature: () => {
+    console.log('User has premium access');
+  }
+});
+```
 
-3. **Get Your API Keys**
-   - Go to Settings → API Keys in Superwall dashboard
-   - Copy your iOS and Android API keys
+## 📊 AdMob Configuration
 
-4. **Update the Code**
-   
-   **In `contexts/PremiumContext.tsx`**, replace the placeholder:
-   ```typescript
-   const SUPERWALL_API_KEYS = {
-     ios: 'YOUR_IOS_SUPERWALL_API_KEY',
-     android: 'YOUR_ANDROID_SUPERWALL_API_KEY'
-   };
-   ```
+### Ad Unit IDs
+Configured in `app.json`:
+```json
+{
+  "plugins": [
+    [
+      "react-native-google-mobile-ads",
+      {
+        "androidAppId": "ca-app-pub-5783177820090411~6455947613",
+        "iosAppId": "ca-app-pub-5783177820090411~8022679724"
+      }
+    ]
+  ]
+}
+```
 
-5. **Configure App Store Connect / Google Play Console**
-   - Set up in-app purchases in App Store Connect (iOS)
-   - Set up in-app products in Google Play Console (Android)
-   - Link these products to your Superwall account
+### Banner Ads
+- Component: `components/AdBanner.tsx`
+- Shown on: Home screen (free users only)
+- Platform-specific implementations:
+  - `AdBanner.native.tsx` - iOS/Android (uses AdMob)
+  - `AdBanner.web.tsx` - Web (mock implementation)
 
-### Step 3: Testing
+### Interstitial Ads
+- Component: `components/InterstitialAdManager.tsx`
+- Shown: After completing a bingo game (free users only)
+- Platform-specific implementations:
+  - `InterstitialAdManager.native.tsx` - iOS/Android (uses AdMob)
+  - `InterstitialAdManager.web.tsx` - Web (mock implementation)
 
-1. **Test Ads in Development**
-   - The app uses test ad units in development mode (`__DEV__`)
-   - You'll see test ads with "Test Ad" labels
-   - These don't require any setup
+## 🔄 Platform-Specific Code
 
-2. **Test Premium Features**
-   - Use Superwall's test mode to simulate purchases
-   - Check that ads disappear when premium is active
-   - Verify unlimited custom themes work
+The app uses platform-specific files to handle native modules:
 
-3. **Test on Real Devices**
-   - Build the app with `expo prebuild`
-   - Test on iOS and Android devices
-   - Verify ads load correctly
-   - Test the purchase flow
+### Premium Context
+- `contexts/PremiumContext.tsx` - Base/Web (mock implementation)
+- `contexts/PremiumContext.native.tsx` - iOS/Android (real Superwall)
 
-## 🎨 How It Works
+### Ad Components
+- `components/AdBanner.tsx` - Base
+- `components/AdBanner.native.tsx` - iOS/Android (real AdMob)
+- `components/AdBanner.web.tsx` - Web (mock)
 
-### For Free Users:
-1. See banner ads at the bottom of the home screen
-2. See interstitial ads every 3 completed games
-3. Limited to 5 custom themes
-4. "Go Premium" button in top-right corner
+### How it works
+React Native automatically picks the correct file:
+- On iOS/Android: Uses `.native.tsx` files
+- On Web: Uses `.web.tsx` files
+- Fallback: Uses base `.tsx` file
 
-### For Premium Users:
-1. No ads anywhere in the app
-2. Unlimited custom themes
-3. Premium badge (optional - can be added)
-4. Access to all features
+## 🧪 Testing Checklist
 
-## 📊 Monetization Strategy
+### In Expo Go (Development)
+- [x] App runs without crashes
+- [x] Premium features show as "free user"
+- [x] No ads displayed
+- [x] Premium screen shows "Running in Expo Go" notice
+- [x] Console logs show "mock mode" messages
 
-### Ad Revenue (Free Users)
-- **Banner Ads**: Continuous revenue from engaged users
-- **Interstitial Ads**: Higher CPM, shown at natural break points (game completion)
-- **Frequency Cap**: Every 3 games to avoid annoying users
+### In Development Build (iOS/Android)
+- [ ] Superwall paywall displays correctly
+- [ ] Can purchase subscription (test mode)
+- [ ] Premium status updates after purchase
+- [ ] Banner ads display on home screen (free users)
+- [ ] Interstitial ads show after bingo completion (free users)
+- [ ] Ads hidden for premium users
+- [ ] Deep links work for Superwall
 
-### Subscription Revenue (Premium Users)
-- **Monthly**: $4.99/month (recommended)
-- **Yearly**: $29.99/year (save 50%)
-- **Lifetime**: $49.99 one-time (optional)
+### Production Build
+- [ ] Superwall configured with production API key
+- [ ] AdMob configured with production ad units
+- [ ] App Store/Play Store in-app purchase products configured
+- [ ] Subscription status syncs correctly
+- [ ] Ads display correctly for free users
+- [ ] Premium users see no ads
 
-### Conversion Funnel
-1. User plays free with ads
-2. After 5 custom themes, prompted to upgrade
-3. "Go Premium" button always visible
-4. Premium screen shows all benefits
-5. Superwall handles the purchase flow
+## 📝 Notes
 
-## 🚀 Next Steps
+1. **Expo Go is for rapid development only** - Native modules require custom builds
+2. **Mock implementations prevent crashes** - The app gracefully handles missing native modules
+3. **Platform-specific files are automatic** - React Native picks the right file based on platform
+4. **Console logs are your friend** - Check logs to see which mode is active
 
-1. **Set up AdMob account** and get your ad unit IDs
-2. **Set up Superwall account** and configure your paywall
-3. **Update the code** with your actual IDs and keys
-4. **Test thoroughly** on both iOS and Android
-5. **Submit to app stores** with in-app purchases configured
-6. **Monitor performance** in AdMob and Superwall dashboards
+## 🔗 Resources
 
-## 💡 Tips for Success
-
-- **Don't show too many ads**: Current setup (banner + interstitial every 3 games) is balanced
-- **Make premium valuable**: Unlimited themes is a strong incentive
-- **Test your paywall**: Use A/B testing in Superwall to optimize conversion
-- **Monitor metrics**: Track ad revenue, premium conversion rate, and user retention
-- **Iterate**: Adjust pricing and features based on user feedback
-
-## 📝 Important Notes
-
-- **Test Mode**: The app uses test ads in development (`__DEV__` mode)
-- **Production**: Replace all placeholder IDs before releasing
-- **Privacy**: AdMob and Superwall handle GDPR/CCPA compliance
-- **Revenue Share**: AdMob takes ~32% of ad revenue, Superwall takes ~5% of subscription revenue
-
-## 🆘 Troubleshooting
-
-### Ads Not Showing
-- Check that you've replaced placeholder IDs
-- Verify AdMob account is approved
-- Check device has internet connection
-- Look for errors in console logs
-
-### Premium Not Working
-- Verify Superwall API keys are correct
-- Check that placement name matches (`premium_upgrade`)
-- Ensure in-app purchases are configured in app stores
-- Test with Superwall's test mode first
-
-### Build Errors
-- Run `npx expo prebuild --clean` to regenerate native code
-- Ensure all dependencies are installed
-- Check that app.json configuration is correct
-
-## 📞 Support
-
-- **AdMob**: [https://support.google.com/admob](https://support.google.com/admob)
-- **Superwall**: [https://docs.superwall.com](https://docs.superwall.com)
-- **Expo**: [https://docs.expo.dev](https://docs.expo.dev)
-
----
-
-**Ready to monetize!** 🎉 Follow the setup steps above and start earning revenue from your bingo app!
+- [Superwall Documentation](https://docs.superwall.com/)
+- [Expo Development Builds](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Google AdMob with Expo](https://docs.expo.dev/versions/latest/sdk/admob/)
+- [React Native Platform-Specific Code](https://reactnative.dev/docs/platform-specific-code)

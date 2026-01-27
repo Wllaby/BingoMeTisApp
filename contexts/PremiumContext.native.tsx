@@ -1,16 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, Platform } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 import Constants from 'expo-constants';
-import { 
-  SuperwallProvider, 
-  useUser, 
-  usePlacement,
-  SuperwallLoading,
-  SuperwallLoaded,
-  SuperwallError
-} from 'expo-superwall';
 
 interface PremiumContextType {
   isPremium: boolean;
@@ -36,7 +28,8 @@ export function MockPremiumProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showPaywall = useCallback(async () => {
-    console.log('PremiumContext: Mock paywall - would show upgrade screen');
+    console.log('PremiumContext: Mock paywall - would show upgrade screen in production build');
+    console.log('PremiumContext: To test payments, create a development build with: npx expo run:ios or npx expo run:android');
   }, []);
 
   const value: PremiumContextType = useMemo(() => ({
@@ -52,13 +45,37 @@ export function MockPremiumProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Real Superwall implementation - only loaded in production builds
+let SuperwallProvider: any;
+let useUser: any;
+let usePlacement: any;
+let SuperwallLoading: any;
+let SuperwallLoaded: any;
+let SuperwallError: any;
+
+// Dynamically import Superwall only if NOT in Expo Go
+if (!isExpoGo) {
+  try {
+    const SuperwallModule = require('expo-superwall');
+    SuperwallProvider = SuperwallModule.SuperwallProvider;
+    useUser = SuperwallModule.useUser;
+    usePlacement = SuperwallModule.usePlacement;
+    SuperwallLoading = SuperwallModule.SuperwallLoading;
+    SuperwallLoaded = SuperwallModule.SuperwallLoaded;
+    SuperwallError = SuperwallModule.SuperwallError;
+    console.log('PremiumContext: Superwall module loaded successfully');
+  } catch (error) {
+    console.error('PremiumContext: Failed to load Superwall module:', error);
+  }
+}
+
 // Real Superwall implementation
 function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // ALWAYS call hooks unconditionally at the top level
-  const user = useUser();
+  const user = useUser ? useUser() : null;
   const subscriptionStatus = user?.subscriptionStatus;
   
   // Memoize the placement configuration to prevent recreating on every render
@@ -78,7 +95,7 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     }
   }), []);
 
-  const placement = usePlacement(placementConfig);
+  const placement = usePlacement ? usePlacement(placementConfig) : null;
   const registerPlacement = placement?.registerPlacement;
 
   useEffect(() => {
@@ -125,7 +142,16 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
 export function PremiumProvider({ children }: { children: ReactNode }) {
   // If we're in Expo Go, use mock implementation
   if (isExpoGo) {
-    console.log('PremiumProvider: Using mock mode (Expo Go)');
+    console.log('PremiumProvider: Using mock mode (Expo Go - native modules not supported)');
+    console.log('PremiumProvider: To test Superwall payments, create a development build:');
+    console.log('  iOS: npx expo run:ios');
+    console.log('  Android: npx expo run:android');
+    return <MockPremiumProvider>{children}</MockPremiumProvider>;
+  }
+
+  // If Superwall module failed to load, use mock
+  if (!SuperwallProvider) {
+    console.log('PremiumProvider: Superwall module not available, using mock mode');
     return <MockPremiumProvider>{children}</MockPremiumProvider>;
   }
 
