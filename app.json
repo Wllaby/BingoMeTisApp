@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Bingo MeTis",
-    "slug": "Bingo MeTis",
+    "slug": "bingo-bonanza-zabspm",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -37,7 +37,7 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively",
+      "package": "com.BingoMeTis.BingoMeTis",
       "screenOrientation": "portrait",
       "intentFilters": [
         {
