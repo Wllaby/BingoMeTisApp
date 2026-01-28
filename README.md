@@ -7,7 +7,9 @@ Made with 💙 for creativity.
 
 ---
 
-## Contributors
+## Visitor Log
+
 - Sam was here
 - Tim was here
 - Jahid was here
+- Sam was here again
