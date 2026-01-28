@@ -5,5 +5,9 @@ This app was built using [Natively.dev](https://natively.dev) - a platform for c
 
 Made with 💙 for creativity.
 
-Sam was here
-Tim was here
+---
+
+## Contributors
+- Sam was here
+- Tim was here
+- Jahid was here
