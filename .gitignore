@@ -1,12 +1,15 @@
+
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
 node_modules/
 
-.git/
+# Expo
 .expo/
-
 dist/
 web-build/
-expo-env.d.ts
 
+# Native
 *.orig.*
 *.jks
 *.p8
@@ -14,26 +17,40 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Metro
 .metro-health-check*
 
+# debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# macOS
 .DS_Store
 *.pem
 
+# local env files
 .env*.local
+.env
 
+# typescript
 *.tsbuildinfo
 
-.natively/
+# backend
+backend/node_modules/
+backend/dist/
+backend/.env
+backend/.turso/
 
-android/
-ios/
+# IDE
+.vscode/
+.idea/
 
-pnpm-lock.yaml
-package-lock.json
+# Logs
+logs
+*.log
 
-# Chat history contains presigned URLs that get flagged by GitHub
-chat_history.json
+# Build artifacts
+*.apk
+*.aab
+*.ipa
