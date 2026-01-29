@@ -60,3 +60,6 @@ logs
 
 expo-env.d.ts
 # @end expo-cli
+
+chat_history.json
+.natively/
