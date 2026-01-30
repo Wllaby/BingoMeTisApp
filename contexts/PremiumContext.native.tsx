@@ -25,7 +25,7 @@ export function MockPremiumProvider({ children }: { children: ReactNode }) {
   const [isLoading] = useState(false);
 
   useEffect(() => {
-    console.log('PremiumContext: Running in mock mode');
+    console.log('PremiumContext: Running in mock mode (Expo Go or Web)');
   }, []);
 
   const showPaywall = useCallback(async () => {
@@ -71,19 +71,10 @@ try {
 function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
 
-  // CRITICAL FIX: Call hooks unconditionally at the top level
-  // We'll handle errors in the effect/callback logic instead
-  let user = null;
-  let placement = null;
-  
-  // Only call hooks if SuperwallModule is available
-  if (SuperwallModule?.useUser) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    user = SuperwallModule.useUser();
-  }
-
+  // CRITICAL FIX: Always call hooks unconditionally
+  // We check if the module exists BEFORE calling the hook
+  const user = SuperwallModule?.useUser ? SuperwallModule.useUser() : null;
   const subscriptionStatus = user?.subscriptionStatus;
   
   // Memoize the placement configuration
@@ -102,11 +93,7 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     }
   }), []);
 
-  if (SuperwallModule?.usePlacement) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    placement = SuperwallModule.usePlacement(placementConfig);
-  }
-
+  const placement = SuperwallModule?.usePlacement ? SuperwallModule.usePlacement(placementConfig) : null;
   const registerPlacement = placement?.registerPlacement;
 
   useEffect(() => {
@@ -123,16 +110,6 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
 
   const showPaywall = useCallback(async () => {
     console.log('Superwall: Showing paywall for premium_upgrade placement');
-    
-    if (hasError) {
-      console.log('Superwall: Error state detected, navigating to premium screen');
-      try {
-        router.push('/premium');
-      } catch (error) {
-        console.error('Superwall: Error navigating to premium screen:', error);
-      }
-      return;
-    }
     
     try {
       if (registerPlacement) {
@@ -154,7 +131,7 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
         console.error('Superwall: Error navigating to premium screen:', navError);
       }
     }
-  }, [registerPlacement, hasError]);
+  }, [registerPlacement]);
 
   const value: PremiumContextType = useMemo(() => ({
     isPremium,
