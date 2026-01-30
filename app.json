@@ -30,7 +30,8 @@
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
           }
         ]
-      }
+      },
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -40,6 +41,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.bingometis.app",
       "screenOrientation": "portrait",
+      "versionCode": 1,
       "intentFilters": [
         {
           "action": "VIEW",
