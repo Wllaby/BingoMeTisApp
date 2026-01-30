@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Bingo MeTis",
-    "slug": "bingometis",
+    "slug": "Bingo MeTis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -73,13 +73,13 @@
         }
       ]
     ],
-    "scheme": "bingometis",
+    "scheme": "Bingo MeTis",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {},
-      "backendUrl": "https://yzkepwhqsdynm8w2kch3pff68s4jkujd.app.specular.dev"
+      "backendUrl": "https://c7essb5msx7wfmarhx58a6ycvu8u7tu4.app.specular.dev"
     }
   }
 }
