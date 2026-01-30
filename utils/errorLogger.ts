@@ -1,11 +1,35 @@
+
 // Global error logging for runtime errors
 // Captures console.log/warn/error and sends to Natively server for AI debugging
 
-// Declare __DEV__ global (React Native global for development mode detection)
-declare const __DEV__: boolean;
-
 import { Platform } from "react-native";
 import Constants from "expo-constants";
+
+// Check if we're in development mode - use multiple fallbacks
+const isDevelopment = (): boolean => {
+  try {
+    // Try __DEV__ first (React Native global)
+    if (typeof __DEV__ !== 'undefined') {
+      return __DEV__;
+    }
+    
+    // Fallback: Check if we're in Expo Go or development build
+    if (Constants.appOwnership === 'expo') {
+      return true;
+    }
+    
+    // Fallback: Check NODE_ENV
+    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    // Default to false for production
+    return false;
+  } catch (error) {
+    // If all checks fail, assume production
+    return false;
+  }
+};
 
 // Simple debouncing to prevent duplicate logs
 const recentLogs: { [key: string]: boolean } = {};
@@ -217,44 +241,48 @@ const extractSourceLocation = (stack: string): string => {
 
 // Function to get caller information from stack trace
 const getCallerInfo = (): string => {
-  const stack = new Error().stack || '';
-  const lines = stack.split('\n');
+  try {
+    const stack = new Error().stack || '';
+    const lines = stack.split('\n');
 
-  // Skip the first few lines (Error, getCallerInfo, stringifyArgs, console override, setupErrorLogging internals)
-  for (let i = 3; i < lines.length; i++) {
-    const line = lines[i];
+    // Skip the first few lines (Error, getCallerInfo, stringifyArgs, console override, setupErrorLogging internals)
+    for (let i = 3; i < lines.length; i++) {
+      const line = lines[i];
 
-    // Skip internal errorLogger calls and node_modules
-    if (line.includes('errorLogger') || line.includes('node_modules')) {
-      continue;
-    }
+      // Skip internal errorLogger calls and node_modules
+      if (line.includes('errorLogger') || line.includes('node_modules')) {
+        continue;
+      }
 
-    // Try multiple patterns to extract source location
-    // Pattern 1: Standard format "at Component (file.tsx:10:5)"
-    let match = line.match(/at\s+\S+\s+\((?:.*\/)?([^/\s:)]+\.[jt]sx?):(\d+):(\d+)\)/);
-    if (match) {
-      return `${match[1]}:${match[2]}`;
-    }
-
-    // Pattern 2: Anonymous function "at file.tsx:10:5"
-    match = line.match(/at\s+(?:.*\/)?([^/\s:)]+\.[jt]sx?):(\d+):(\d+)/);
-    if (match) {
-      return `${match[1]}:${match[2]}`;
-    }
-
-    // Pattern 3: Hermes/React Native bundle format
-    match = line.match(/(?:.*\/)?([^/\s:)]+\.[jt]sx?):(\d+):\d+/);
-    if (match) {
-      return `${match[1]}:${match[2]}`;
-    }
-
-    // Pattern 4: Look for app/ or components/ paths specifically
-    if (line.includes('app/') || line.includes('components/') || line.includes('screens/') || line.includes('hooks/') || line.includes('utils/')) {
-      match = line.match(/([^/\s:)]+\.[jt]sx?):(\d+)/);
+      // Try multiple patterns to extract source location
+      // Pattern 1: Standard format "at Component (file.tsx:10:5)"
+      let match = line.match(/at\s+\S+\s+\((?:.*\/)?([^/\s:)]+\.[jt]sx?):(\d+):(\d+)\)/);
       if (match) {
         return `${match[1]}:${match[2]}`;
       }
+
+      // Pattern 2: Anonymous function "at file.tsx:10:5"
+      match = line.match(/at\s+(?:.*\/)?([^/\s:)]+\.[jt]sx?):(\d+):(\d+)/);
+      if (match) {
+        return `${match[1]}:${match[2]}`;
+      }
+
+      // Pattern 3: Hermes/React Native bundle format
+      match = line.match(/(?:.*\/)?([^/\s:)]+\.[jt]sx?):(\d+):\d+/);
+      if (match) {
+        return `${match[1]}:${match[2]}`;
+      }
+
+      // Pattern 4: Look for app/ or components/ paths specifically
+      if (line.includes('app/') || line.includes('components/') || line.includes('screens/') || line.includes('hooks/') || line.includes('utils/')) {
+        match = line.match(/([^/\s:)]+\.[jt]sx?):(\d+)/);
+        if (match) {
+          return `${match[1]}:${match[2]}`;
+        }
+      }
     }
+  } catch (error) {
+    // Silently fail if stack trace parsing fails
   }
 
   return '';
@@ -262,105 +290,119 @@ const getCallerInfo = (): string => {
 
 // Helper to safely stringify arguments
 const stringifyArgs = (args: any[]): string => {
-  return args.map(arg => {
-    if (typeof arg === 'string') return arg;
-    if (arg === null) return 'null';
-    if (arg === undefined) return 'undefined';
-    try {
-      return JSON.stringify(arg);
-    } catch {
-      return String(arg);
-    }
-  }).join(' ');
+  try {
+    return args.map(arg => {
+      if (typeof arg === 'string') return arg;
+      if (arg === null) return 'null';
+      if (arg === undefined) return 'undefined';
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return String(arg);
+      }
+    }).join(' ');
+  } catch (error) {
+    return 'Error stringifying arguments';
+  }
 };
 
 export const setupErrorLogging = () => {
   // Don't initialize in production builds - no need for log forwarding
-  if (!__DEV__) {
+  if (!isDevelopment()) {
     return;
   }
 
-  // Store original console methods BEFORE any modifications
-  const originalConsoleLog = console.log;
-  const originalConsoleWarn = console.warn;
-  const originalConsoleError = console.error;
+  try {
+    // Store original console methods BEFORE any modifications
+    const originalConsoleLog = console.log;
+    const originalConsoleWarn = console.warn;
+    const originalConsoleError = console.error;
 
-  // Log initialization info using original console (not intercepted)
-  const logServerUrl = getLogServerUrl();
-  originalConsoleLog('[Natively] Setting up error logging...');
-  originalConsoleLog('[Natively] Log server URL:', logServerUrl || 'NOT AVAILABLE');
-  originalConsoleLog('[Natively] Platform:', Platform.OS);
+    // Log initialization info using original console (not intercepted)
+    const logServerUrl = getLogServerUrl();
+    originalConsoleLog('[Natively] Setting up error logging...');
+    originalConsoleLog('[Natively] Log server URL:', logServerUrl || 'NOT AVAILABLE');
+    originalConsoleLog('[Natively] Platform:', Platform.OS);
 
-  // Override console.log to capture and send to server
-  console.log = (...args: any[]) => {
-    // Always call original first
-    originalConsoleLog.apply(console, args);
+    // Override console.log to capture and send to server
+    console.log = (...args: any[]) => {
+      // Always call original first
+      originalConsoleLog.apply(console, args);
 
-    // Queue log for sending to server
-    const message = stringifyArgs(args);
-    const source = getCallerInfo();
-    queueLog('log', message, source);
-  };
-
-  // Override console.warn to capture and send to server
-  console.warn = (...args: any[]) => {
-    // Always call original first
-    originalConsoleWarn.apply(console, args);
-
-    // Queue log for sending to server (skip muted messages)
-    const message = stringifyArgs(args);
-    if (shouldMuteMessage(message)) return;
-
-    const source = getCallerInfo();
-    queueLog('warn', message, source);
-  };
-
-  // Override console.error to capture and send to server
-  console.error = (...args: any[]) => {
-    // Queue log for sending to server (skip muted messages)
-    const message = stringifyArgs(args);
-    if (shouldMuteMessage(message)) return;
-
-    // Always call original first
-    originalConsoleError.apply(console, args);
-
-    const source = getCallerInfo();
-    queueLog('error', message, source);
-
-    // Also send to parent window for web iframe mode
-    sendErrorToParent('error', 'Console Error', message);
-  };
-
-  // Capture unhandled errors in web environment
-  if (typeof window !== 'undefined') {
-    // Override window.onerror to catch JavaScript errors
-    window.onerror = (message, source, lineno, colno, error) => {
-      const sourceFile = source ? source.split('/').pop() : 'unknown';
-      const errorMessage = `RUNTIME ERROR: ${message} at ${sourceFile}:${lineno}:${colno}`;
-
-      queueLog('error', errorMessage, `${sourceFile}:${lineno}:${colno}`);
-      sendErrorToParent('error', 'JavaScript Runtime Error', {
-        message,
-        source: `${sourceFile}:${lineno}:${colno}`,
-        error: error?.stack || error,
-      });
-
-      return false; // Don't prevent default error handling
+      // Queue log for sending to server
+      const message = stringifyArgs(args);
+      const source = getCallerInfo();
+      queueLog('log', message, source);
     };
 
-    // Capture unhandled promise rejections (web only)
-    if (Platform.OS === 'web') {
-      window.addEventListener('unhandledrejection', (event) => {
-        const message = `UNHANDLED PROMISE REJECTION: ${event.reason}`;
-        queueLog('error', message, '');
-        sendErrorToParent('error', 'Unhandled Promise Rejection', { reason: event.reason });
-      });
+    // Override console.warn to capture and send to server
+    console.warn = (...args: any[]) => {
+      // Always call original first
+      originalConsoleWarn.apply(console, args);
+
+      // Queue log for sending to server (skip muted messages)
+      const message = stringifyArgs(args);
+      if (shouldMuteMessage(message)) return;
+
+      const source = getCallerInfo();
+      queueLog('warn', message, source);
+    };
+
+    // Override console.error to capture and send to server
+    console.error = (...args: any[]) => {
+      // Queue log for sending to server (skip muted messages)
+      const message = stringifyArgs(args);
+      if (shouldMuteMessage(message)) return;
+
+      // Always call original first
+      originalConsoleError.apply(console, args);
+
+      const source = getCallerInfo();
+      queueLog('error', message, source);
+
+      // Also send to parent window for web iframe mode
+      sendErrorToParent('error', 'Console Error', message);
+    };
+
+    // Capture unhandled errors in web environment
+    if (typeof window !== 'undefined') {
+      // Override window.onerror to catch JavaScript errors
+      window.onerror = (message, source, lineno, colno, error) => {
+        const sourceFile = source ? source.split('/').pop() : 'unknown';
+        const errorMessage = `RUNTIME ERROR: ${message} at ${sourceFile}:${lineno}:${colno}`;
+
+        queueLog('error', errorMessage, `${sourceFile}:${lineno}:${colno}`);
+        sendErrorToParent('error', 'JavaScript Runtime Error', {
+          message,
+          source: `${sourceFile}:${lineno}:${colno}`,
+          error: error?.stack || error,
+        });
+
+        return false; // Don't prevent default error handling
+      };
+
+      // Capture unhandled promise rejections (web only)
+      if (Platform.OS === 'web') {
+        window.addEventListener('unhandledrejection', (event) => {
+          const message = `UNHANDLED PROMISE REJECTION: ${event.reason}`;
+          queueLog('error', message, '');
+          sendErrorToParent('error', 'Unhandled Promise Rejection', { reason: event.reason });
+        });
+      }
     }
+  } catch (error) {
+    // If setup fails, log to original console and continue
+    console.error('[Natively] Failed to setup error logging:', error);
   }
 };
 
 // Auto-initialize logging when this module is imported
 // Only run in development mode - production apps don't need log forwarding
-if (__DEV__) {
-  setupErrorLogging();
+// Wrap in try-catch to prevent any initialization crashes
+try {
+  if (isDevelopment()) {
+    setupErrorLogging();
+  }
+} catch (error) {
+  console.error('[Natively] Error during auto-initialization:', error);
 }

@@ -35,14 +35,16 @@ module.exports = {
     "react/no-unescaped-entities": "off",
     "import/no-unresolved": "off",
     "prefer-const": "off",
-    "react/prop-types": 1,
+    "react/prop-types": "off",
     "no-case-declarations": "off",
     "no-empty": "off",
     "react/display-name": "off",
     "no-constant-condition": "off",
     "no-var": "off",
     "no-useless-escape": "off",
-    "@typescript-eslint/array-type": "off"
+    "@typescript-eslint/array-type": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
   },
   overrides: [
     {

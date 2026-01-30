@@ -67,50 +67,42 @@ try {
   console.log('PremiumContext: Superwall module not available:', error);
 }
 
-// Create safe hook wrappers that can be called unconditionally
-function useSafeSuperwallUser() {
-  // Always call the hook unconditionally - if SuperwallModule doesn't exist, return null
-  if (SuperwallModule && SuperwallModule.useUser) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return SuperwallModule.useUser();
-  }
-  return null;
-}
-
-function useSafeSuperwallPlacement(config: any) {
-  // Always call the hook unconditionally - if SuperwallModule doesn't exist, return null
-  if (SuperwallModule && SuperwallModule.usePlacement) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return SuperwallModule.usePlacement(config);
-  }
-  return null;
-}
-
 // Real Superwall implementation
 function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Memoize the placement configuration
-  const placementConfig = useMemo(() => ({
-    onPresent: (info: any) => {
-      console.log('Superwall: Paywall presented', info);
-    },
-    onDismiss: (info: any, result: any) => {
-      console.log('Superwall: Paywall dismissed', info, result);
-      if (result === 'purchased' || result === 'restored') {
-        console.log('Superwall: User purchased or restored subscription');
-      }
-    },
-    onError: (error: any) => {
-      console.error('Superwall: Paywall error', error);
-    }
-  }), []);
-
   // CRITICAL FIX: Always call hooks unconditionally at the top level
-  // The safe wrappers handle the case where SuperwallModule might be null
-  const user = useSafeSuperwallUser();
-  const placement = useSafeSuperwallPlacement(placementConfig);
+  // Check if SuperwallModule exists and has the hooks we need
+  const hasSuperwallHooks = SuperwallModule && SuperwallModule.useUser && SuperwallModule.usePlacement;
+  
+  // Call hooks unconditionally - they will return null if SuperwallModule doesn't exist
+  let user = null;
+  let placement = null;
+  
+  try {
+    if (hasSuperwallHooks) {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      user = SuperwallModule.useUser();
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      placement = SuperwallModule.usePlacement({
+        onPresent: (info: any) => {
+          console.log('Superwall: Paywall presented', info);
+        },
+        onDismiss: (info: any, result: any) => {
+          console.log('Superwall: Paywall dismissed', info, result);
+          if (result === 'purchased' || result === 'restored') {
+            console.log('Superwall: User purchased or restored subscription');
+          }
+        },
+        onError: (error: any) => {
+          console.error('Superwall: Paywall error', error);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('PremiumContext: Error calling Superwall hooks:', error);
+  }
   
   const subscriptionStatus = user?.subscriptionStatus;
   const registerPlacement = placement?.registerPlacement;
