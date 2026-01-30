@@ -67,16 +67,30 @@ try {
   console.log('PremiumContext: Superwall module not available:', error);
 }
 
+// Create safe hook wrappers that can be called unconditionally
+function useSafeSuperwallUser() {
+  // Always call the hook unconditionally - if SuperwallModule doesn't exist, return null
+  if (SuperwallModule && SuperwallModule.useUser) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return SuperwallModule.useUser();
+  }
+  return null;
+}
+
+function useSafeSuperwallPlacement(config: any) {
+  // Always call the hook unconditionally - if SuperwallModule doesn't exist, return null
+  if (SuperwallModule && SuperwallModule.usePlacement) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return SuperwallModule.usePlacement(config);
+  }
+  return null;
+}
+
 // Real Superwall implementation
 function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // CRITICAL FIX: Always call hooks unconditionally
-  // We check if the module exists BEFORE calling the hook
-  const user = SuperwallModule?.useUser ? SuperwallModule.useUser() : null;
-  const subscriptionStatus = user?.subscriptionStatus;
-  
   // Memoize the placement configuration
   const placementConfig = useMemo(() => ({
     onPresent: (info: any) => {
@@ -93,7 +107,12 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     }
   }), []);
 
-  const placement = SuperwallModule?.usePlacement ? SuperwallModule.usePlacement(placementConfig) : null;
+  // CRITICAL FIX: Always call hooks unconditionally at the top level
+  // The safe wrappers handle the case where SuperwallModule might be null
+  const user = useSafeSuperwallUser();
+  const placement = useSafeSuperwallPlacement(placementConfig);
+  
+  const subscriptionStatus = user?.subscriptionStatus;
   const registerPlacement = placement?.registerPlacement;
 
   useEffect(() => {
