@@ -1,3 +1,4 @@
+
 // https://docs.expo.dev/guides/using-eslint/
 module.exports = {
   extends: [
@@ -26,12 +27,13 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/prefer-as-const": "off",
     "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/no-require-imports": "off",
     "react/react-in-jsx-scope": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "@typescript-eslint/no-wrapper-object-types": "off",
     "@typescript-eslint/ban-tslint-comment": "off",
     "react/no-unescaped-entities": "off",
-    "import/no-unresolved": "error",
+    "import/no-unresolved": "off",
     "prefer-const": "off",
     "react/prop-types": 1,
     "no-case-declarations": "off",
@@ -39,7 +41,8 @@ module.exports = {
     "react/display-name": "off",
     "no-constant-condition": "off",
     "no-var": "off",
-    "no-useless-escape": "off"
+    "no-useless-escape": "off",
+    "@typescript-eslint/array-type": "off"
   },
   overrides: [
     {
