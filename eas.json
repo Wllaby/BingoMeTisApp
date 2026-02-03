@@ -18,7 +18,7 @@
         "bundleIdentifier": "com.bingometis.app"
       },
       "android": {
-        "buildType": "apk",
+        "buildType": "app-bundle",
         "package": "com.bingometis.app"
       }
     }
@@ -26,9 +26,7 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "YOUR_APPLE_ID",
-        "ascAppId": "YOUR_ASC_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
+        "ascAppId": "6739162085"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",
