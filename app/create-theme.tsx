@@ -15,13 +15,11 @@ import {
   Modal,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import Constants from 'expo-constants';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
 import { usePremium } from '@/contexts/PremiumContext';
-
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+import { bingoService } from '@/utils/bingoService';
 const MAX_CUSTOM_THEMES_FREE = 5;
 const MAX_CUSTOM_THEMES_PREMIUM = 30;
 
@@ -70,30 +68,12 @@ export default function CreateThemeScreen() {
 
   const checkCustomThemeCount = async () => {
     try {
-      if (!BACKEND_URL) {
-        console.error('CreateThemeScreen: BACKEND_URL is not configured');
-        setLoading(false);
-        return;
-      }
-
       console.log('CreateThemeScreen: Fetching templates to count custom themes');
-      const response = await fetch(`${BACKEND_URL}/templates`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const templates = await bingoService.getTemplates();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
-      
-      const customCount = templatesArray.filter((t: any) => t.isCustom || t.is_custom).length;
+      const customCount = templates.filter(t => t.is_custom).length;
       console.log('CreateThemeScreen: Current custom theme count:', customCount);
-      
+
       setCustomThemeCount(customCount);
       setLoading(false);
 
@@ -123,28 +103,10 @@ export default function CreateThemeScreen() {
   const loadTemplates = async () => {
     try {
       setLoadingTemplates(true);
-      
-      if (!BACKEND_URL) {
-        console.error('CreateThemeScreen: BACKEND_URL is not configured');
-        setLoadingTemplates(false);
-        return;
-      }
 
       console.log('CreateThemeScreen: Fetching templates for template selection');
-      const response = await fetch(`${BACKEND_URL}/templates`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const templatesArray = await bingoService.getTemplates();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
-      
       const transformedTemplates: BingoTemplate[] = templatesArray.map((template: any) => ({
         id: template.id,
         name: template.name,
@@ -338,35 +300,15 @@ export default function CreateThemeScreen() {
     }
 
     setSaving(true);
-    console.log('CreateThemeScreen: Saving theme to backend');
+    console.log('CreateThemeScreen: Saving theme to Supabase');
 
     try {
-      if (!BACKEND_URL) {
-        console.error('CreateThemeScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        setSaving(false);
-        return;
-      }
+      const savedTheme = await bingoService.createCustomTemplate(
+        trimmedName,
+        themeDescription.trim(),
+        options
+      );
 
-      const response = await fetch(`${BACKEND_URL}/templates`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: trimmedName,
-          description: themeDescription.trim() || undefined,
-          items: options,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('CreateThemeScreen: Failed to save theme:', errorData);
-        throw new Error(errorData.error || 'Failed to save theme');
-      }
-
-      const savedTheme = await response.json();
       console.log('CreateThemeScreen: Theme saved successfully:', savedTheme.id);
       console.log('CreateThemeScreen: Share code:', savedTheme.code);
 

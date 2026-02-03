@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   Platform,
   TouchableOpacity,
   Alert,
@@ -12,12 +12,9 @@ import {
   ImageSourcePropType
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
-
-// Get backend URL from app.json configuration
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+import { bingoService } from '@/utils/bingoService';
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -51,60 +48,28 @@ export default function HistoryScreen() {
 
   const loadGameHistory = async () => {
     try {
-      console.log('HistoryScreen: Fetching game history from API');
-      console.log('HistoryScreen: Backend URL:', BACKEND_URL);
-      
-      if (!BACKEND_URL) {
-        console.error('HistoryScreen: BACKEND_URL is not configured');
-        setLoading(false);
-        return;
-      }
+      console.log('HistoryScreen: Fetching game history from Supabase');
 
-      const response = await fetch(`${BACKEND_URL}/games`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const games = await bingoService.getGameHistory();
+      console.log('HistoryScreen: Game history loaded from Supabase', games.length);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('HistoryScreen: Game history loaded from API', data.length);
-      
-      // Transform backend data to match frontend interface
-      const transformedGames: GameHistory[] = data.map((game: any) => ({
+      const transformedGames: GameHistory[] = games.map((game: any) => ({
         id: game.id,
-        template_name: game.templateName || game.template_name,
-        marked_cells: game.markedCells || game.marked_cells || [],
+        template_name: game.template_name,
+        marked_cells: game.marked_cells || [],
         completed: game.completed,
-        completed_at: game.completedAt || game.completed_at,
-        created_at: game.createdAt || game.created_at,
-        bingo_count: game.bingoCount || game.bingo_count,
+        completed_at: game.completed_at,
+        created_at: game.created_at,
+        bingo_count: game.bingo_count,
       }));
-      
-      // Filter to only show completed games
-      const completedGames = transformedGames.filter(game => game.completed);
-      console.log('HistoryScreen: Completed games:', completedGames.length);
-      
-      // Sort by completion date (most recent first) and limit to last 10
-      const sortedGames = completedGames.sort((a, b) => {
-        const dateA = new Date(a.completed_at || a.created_at).getTime();
-        const dateB = new Date(b.completed_at || b.created_at).getTime();
-        return dateB - dateA;
-      });
-      
-      // Limit to last 10 games
-      const last10Games = sortedGames.slice(0, 10);
+
+      const last10Games = transformedGames.slice(0, 10);
       console.log('HistoryScreen: Showing last 10 completed games:', last10Games.length);
-      
+
       setGames(last10Games);
       setLoading(false);
     } catch (error) {
       console.error('HistoryScreen: Error loading game history', error);
-      Alert.alert('Error', 'Failed to load game history. Please try again.');
       setLoading(false);
     }
   };

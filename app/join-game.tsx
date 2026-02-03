@@ -16,12 +16,10 @@ import {
   Keyboard,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import Constants from 'expo-constants';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Haptics from 'expo-haptics';
-
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
+import { bingoService } from '@/utils/bingoService';
 const MAX_CUSTOM_THEMES = 5;
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
@@ -48,30 +46,12 @@ export default function JoinGameScreen() {
 
   const checkCustomThemeCount = async () => {
     try {
-      if (!BACKEND_URL) {
-        console.error('JoinGameScreen: BACKEND_URL is not configured');
-        setCheckingLimit(false);
-        return;
-      }
-
       console.log('JoinGameScreen: Fetching templates to count custom themes');
-      const response = await fetch(`${BACKEND_URL}/templates`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const templates = await bingoService.getTemplates();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
-      
-      const customCount = templatesArray.filter((t: any) => t.isCustom || t.is_custom).length;
+      const customCount = templates.filter(t => t.is_custom).length;
       console.log('JoinGameScreen: Current custom theme count:', customCount);
-      
+
       setCustomThemeCount(customCount);
       setCheckingLimit(false);
     } catch (error) {
@@ -108,30 +88,13 @@ export default function JoinGameScreen() {
 
     try {
       console.log('JoinGameScreen: Fetching template with code:', gameCode);
-      console.log('JoinGameScreen: Backend URL:', BACKEND_URL);
-      
-      if (!BACKEND_URL) {
-        console.error('JoinGameScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        setLoading(false);
-        return;
+
+      const template = await bingoService.getTemplateByCode(gameCode.trim().toUpperCase());
+
+      if (!template) {
+        throw new Error('Theme code not found. Please check the code and try again.');
       }
 
-      const response = await fetch(`${BACKEND_URL}/templates/code/${gameCode.trim().toUpperCase()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Theme code not found. Please check the code and try again.');
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const template = await response.json();
       console.log('JoinGameScreen: Template fetched successfully:', template.name);
       
       Alert.alert(
