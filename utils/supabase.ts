@@ -1,23 +1,27 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+// Hardcoded fallback values
+const FALLBACK_SUPABASE_URL = 'https://0ec90b57d6e95fcbda19832f.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJib2x0IiwicmVmIjoiMGVjOTBiNTdkNmU5NWZjYmRhMTk4MzJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4ODE1NzQsImV4cCI6MTc1ODg4MTU3NH0.9I8-U0x86Ak8t2DGaIk0HfvTSLsAyzdnz-Nw00mMkKw';
 
 let supabaseInstance: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient {
   if (!supabaseInstance) {
-    // Try to get from environment variables first, then fall back to app.json
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl || '';
-    const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey || '';
+    // Try multiple sources with fallback
+    const supabaseUrl =
+      process.env.EXPO_PUBLIC_SUPABASE_URL ||
+      Constants.expoConfig?.extra?.supabaseUrl ||
+      FALLBACK_SUPABASE_URL;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Supabase configuration missing:', {
-        hasUrl: !!supabaseUrl,
-        hasKey: !!supabaseAnonKey,
-        envUrl: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
-        configUrl: !!Constants.expoConfig?.extra?.supabaseUrl,
-      });
-      throw new Error('Supabase URL and/or Anon Key are not configured. Please check your .env file or app.json configuration.');
-    }
+    const supabaseAnonKey =
+      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+      Constants.expoConfig?.extra?.supabaseAnonKey ||
+      FALLBACK_SUPABASE_ANON_KEY;
+
+    console.log('Initializing Supabase client on platform:', Platform.OS);
 
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
