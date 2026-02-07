@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  ScrollView, 
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
   Alert,
   Dimensions,
   Platform,
@@ -17,7 +17,6 @@ import {
   Linking
 } from "react-native";
 import { Stack, useRouter, useFocusEffect } from "expo-router";
-import Constants from "expo-constants";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import * as Haptics from "expo-haptics";
@@ -29,12 +28,11 @@ import { captureRef } from 'react-native-view-shot';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useInterstitialAd } from '@/components/InterstitialAdManager';
 import { AdBanner } from '@/components/AdBanner';
+import { bingoService } from '@/utils/bingoService';
+import { seedDefaultTemplates } from '@/utils/seedTemplates';
 
 const { width, height } = Dimensions.get('window');
 const CELL_SIZE = (width - 40) / 5;
-
-// Get backend URL from app.json configuration
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl;
 
 // Maximum custom themes and active games based on premium status
 const MAX_CUSTOM_THEMES_FREE = 5;
@@ -418,8 +416,10 @@ function HomeScreen() {
   // Load templates and active games on mount
   useEffect(() => {
     console.log('HomeScreen: Initial load on mount');
-    loadTemplates();
-    loadActiveGames();
+    seedDefaultTemplates().then(() => {
+      loadTemplates();
+      loadActiveGames();
+    });
   }, []);
 
   // Reload templates and active games when screen comes into focus (but not on initial mount)
@@ -435,91 +435,38 @@ function HomeScreen() {
 
   const loadTemplates = async () => {
     try {
-      console.log('HomeScreen: Fetching templates from API');
-      console.log('HomeScreen: Backend URL:', BACKEND_URL);
-      
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        setLoading(false);
-        return;
-      }
+      console.log('HomeScreen: Fetching templates from Supabase');
 
-      const response = await fetch(`${BACKEND_URL}/templates`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const templates = await bingoService.getTemplates();
+      console.log('HomeScreen: Templates loaded from Supabase', templates.length);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('HomeScreen: Templates response:', data);
-      
-      // Handle both array and object responses
-      const templatesArray = Array.isArray(data) ? data : (data.templates || []);
-      console.log('HomeScreen: Templates loaded from API', templatesArray.length);
-      
-      // Transform backend data to match frontend interface
-      const transformedTemplates: BingoTemplate[] = templatesArray.map((template: any) => ({
-        id: template.id,
-        name: template.name,
-        description: template.description,
-        items: template.items,
-        is_custom: template.isCustom || template.is_custom,
-        created_at: template.createdAt || template.created_at,
-      }));
-      
-      setTemplates(transformedTemplates);
+      setTemplates(templates);
       setLoading(false);
     } catch (error) {
       console.error('HomeScreen: Error loading templates', error);
-      Alert.alert('Error', 'Failed to load templates. Please try again.');
       setLoading(false);
     }
   };
 
   const loadActiveGames = async () => {
     try {
-      console.log('HomeScreen: Fetching active games from API');
-      
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        return;
-      }
+      console.log('HomeScreen: Fetching active games from Supabase');
 
-      const response = await fetch(`${BACKEND_URL}/games/active`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const games = await bingoService.getActiveGames();
+      console.log('HomeScreen: Active games loaded from Supabase', games.length);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('HomeScreen: Active games response:', data);
-      
-      const gamesArray = Array.isArray(data) ? data : (data.games || []);
-      console.log('HomeScreen: Active games loaded from API', gamesArray.length);
-      
-      const transformedGames: BingoGame[] = gamesArray.map((game: any) => ({
+      const transformedGames: BingoGame[] = games.map((game: any) => ({
         id: game.id,
-        template_id: game.templateId || game.template_id,
-        template_name: game.templateName || game.template_name,
-        marked_cells: game.markedCells || game.marked_cells || [],
+        template_id: game.template_id,
+        template_name: game.template_name,
+        marked_cells: game.marked_cells || [],
         completed: game.completed,
         items: game.items,
-        bingo_count: game.bingoCount || game.bingo_count || 0,
+        bingo_count: game.bingo_count || 0,
         target_bingo_count: 1,
-        is_custom_theme: game.isCustomTheme || game.is_custom_theme || false,
+        is_custom_theme: false,
       }));
-      
+
       setActiveGames(transformedGames);
     } catch (error) {
       console.error('HomeScreen: Error loading active games', error);
@@ -563,17 +510,19 @@ function HomeScreen() {
     setCurrentGame(null);
     setShowTemplateList(false);
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   };
 
   const startGame = async () => {
     console.log('HomeScreen: Start Game button pressed');
-    
+
     if (!selectedTemplate) {
       console.error('HomeScreen: No template selected');
       return;
     }
-    
+
     // Check if user has reached the limit for active games
     if (activeGames.length >= maxActiveGames) {
       const limitText = maxActiveGames.toString();
@@ -594,33 +543,13 @@ function HomeScreen() {
       );
       return;
     }
-    
+
     try {
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        return;
-      }
+      console.log('HomeScreen: Creating game in Supabase with template ID:', selectedTemplate.id);
 
-      // Create game in backend
-      console.log('HomeScreen: Creating game in backend with template ID:', selectedTemplate.id);
-      const response = await fetch(`${BACKEND_URL}/games`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          template_id: selectedTemplate.id,
-        }),
-      });
+      const backendGame = await bingoService.createGame(selectedTemplate.id);
+      console.log('HomeScreen: Game created in Supabase with ID:', backendGame.id);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const backendGame = await response.json();
-      console.log('HomeScreen: Game created in backend with ID:', backendGame.id);
-      
       const newGame: BingoGame = {
         id: backendGame.id,
         template_id: selectedTemplate.id,
@@ -632,14 +561,16 @@ function HomeScreen() {
         target_bingo_count: 1,
         is_custom_theme: selectedTemplate.is_custom,
       };
-      
+
       setCurrentGame(newGame);
       setGameStarted(true);
-      
+
       // Reload active games to show the new game in the list
       await loadActiveGames();
-      
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       console.log('HomeScreen: Game started and added to active games list');
     } catch (error) {
       console.error('HomeScreen: Error starting game', error);
@@ -665,7 +596,9 @@ function HomeScreen() {
     setPreviewItems(game.items || []);
     setShowTemplateList(false);
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   };
 
   const countBingos = (markedCells: number[]): number => {
@@ -699,35 +632,19 @@ function HomeScreen() {
 
   const saveGameToHistory = async (game: BingoGame, bingoCount: number) => {
     console.log('HomeScreen: Saving game to history');
-    
-    try {
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        return;
-      }
 
-      console.log('HomeScreen: Saving game to backend - Game ID:', game.id);
-      
-      // Use PUT /games/:id to mark game as completed
-      const response = await fetch(`${BACKEND_URL}/games/${game.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          markedCells: game.marked_cells,
-          completed: true,
-        }),
+    try {
+      console.log('HomeScreen: Saving game to Supabase - Game ID:', game.id);
+
+      await bingoService.updateGame(game.id, {
+        marked_cells: game.marked_cells,
+        completed: true,
+        bingo_count: bingoCount,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const savedGame = await response.json();
-      console.log('HomeScreen: Game saved to history successfully', savedGame.id);
+      console.log('HomeScreen: Game saved to history successfully', game.id);
       console.log('HomeScreen: Game completed with', bingoCount, 'bingos');
-      
+
       // Show interstitial ad for free users
       if (!isPremium) {
         console.log('HomeScreen: User is free, showing interstitial ad');
@@ -735,7 +652,6 @@ function HomeScreen() {
       }
     } catch (error) {
       console.error('HomeScreen: Error saving game to history', error);
-      // Don't show error to user, just log it
     }
   };
 
@@ -817,7 +733,9 @@ function HomeScreen() {
     
     setCurrentGame(updatedGame);
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     
     const bingoCount = countBingos(newMarkedCells);
     console.log('HomeScreen: Current bingo count:', bingoCount);
@@ -831,7 +749,9 @@ function HomeScreen() {
     if (currentGame.target_bingo_count === 1 && bingoCount >= 1 && currentGame.bingo_count < 1) {
       console.log('HomeScreen: First BINGO achieved!');
       
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       
       setCurrentGame({
         ...updatedGame,
@@ -843,7 +763,9 @@ function HomeScreen() {
     } else if (currentGame.target_bingo_count === 3 && bingoCount >= 3 && currentGame.bingo_count < 3) {
       console.log('HomeScreen: 3 BINGOs achieved!');
       
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       
       setCurrentGame({
         ...updatedGame,
@@ -856,7 +778,9 @@ function HomeScreen() {
       console.log('HomeScreen: Full card completed!');
       updateData.completed = true;
       
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       
       setShowConfetti(true);
       if (confettiRef.current) {
@@ -868,27 +792,15 @@ function HomeScreen() {
       setShowFullCardModal(true);
     }
     
-    // Save game progress to backend
+    // Save game progress to Supabase
     try {
-      if (BACKEND_URL && currentGame.id) {
-        console.log('HomeScreen: Saving game progress to backend');
-        const saveResponse = await fetch(`${BACKEND_URL}/games/${currentGame.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updateData),
-        });
-        
-        if (!saveResponse.ok) {
-          console.error('HomeScreen: Failed to save game progress, status:', saveResponse.status);
-        } else {
-          console.log('HomeScreen: Game progress saved successfully');
-        }
+      if (currentGame.id) {
+        console.log('HomeScreen: Saving game progress to Supabase');
+        await bingoService.updateGame(currentGame.id, updateData);
+        console.log('HomeScreen: Game progress saved successfully');
       }
     } catch (error) {
       console.error('HomeScreen: Error saving game progress', error);
-      // Don't show error to user, just log it
     }
   };
 
@@ -913,7 +825,9 @@ function HomeScreen() {
       setCurrentGame(updatedGame);
     }
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     console.log('HomeScreen: New card generated');
   };
 
@@ -928,12 +842,14 @@ function HomeScreen() {
     setGameStarted(false);
     setPreviewItems([]);
     setShowConfetti(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   };
 
   const deleteCustomTemplate = async (templateId: string, templateName: string) => {
     console.log('HomeScreen: Deleting custom template', templateId, templateName);
-    
+
     Alert.alert(
       'Delete Theme',
       `Are you sure you want to delete "${templateName}"? This action cannot be undone.`,
@@ -950,35 +866,17 @@ function HomeScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              if (!BACKEND_URL) {
-                console.error('HomeScreen: BACKEND_URL is not configured');
-                Alert.alert('Error', 'Backend URL is not configured');
-                return;
-              }
-
-              console.log('HomeScreen: Sending delete request to backend');
-              const response = await fetch(`${BACKEND_URL}/templates/${templateId}`, {
-                method: 'DELETE',
-              });
-
-              if (!response.ok) {
-                let errorMessage = `HTTP error! status: ${response.status}`;
-                try {
-                  const errorData = await response.json();
-                  errorMessage = errorData.error || errorMessage;
-                } catch (e) {
-                  console.log('HomeScreen: Could not parse error response');
-                }
-                throw new Error(errorMessage);
-              }
+              console.log('HomeScreen: Sending delete request to Supabase');
+              await bingoService.deleteTemplate(templateId);
 
               console.log('HomeScreen: Template deleted successfully');
-              
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-              // Reload templates to reflect the deletion
+              if (Platform.OS !== 'web') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+
               await loadTemplates();
-              
+
               Alert.alert('Success', 'Theme deleted successfully');
             } catch (error) {
               console.error('HomeScreen: Error deleting template', error);
@@ -992,7 +890,7 @@ function HomeScreen() {
 
   const deleteActiveGame = async (gameId: string, gameName: string) => {
     console.log('HomeScreen: Deleting active game', gameId, gameName);
-    
+
     Alert.alert(
       'Delete Active Game',
       `Are you sure you want to delete "${gameName}"? This action cannot be undone.`,
@@ -1009,39 +907,21 @@ function HomeScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              if (!BACKEND_URL) {
-                console.error('HomeScreen: BACKEND_URL is not configured');
-                Alert.alert('Error', 'Backend URL is not configured');
-                return;
-              }
+              console.log('HomeScreen: Sending delete request to Supabase for game', gameId);
+              await bingoService.deleteGame(gameId);
 
-              console.log('HomeScreen: Sending delete request to backend for game', gameId);
-              const response = await fetch(`${BACKEND_URL}/games/${gameId}`, {
-                method: 'DELETE',
-              });
+              console.log('HomeScreen: Active game deleted successfully from Supabase');
 
-              if (!response.ok) {
-                let errorMessage = `HTTP error! status: ${response.status}`;
-                try {
-                  const errorData = await response.json();
-                  errorMessage = errorData.error || errorMessage;
-                } catch (e) {
-                  console.log('HomeScreen: Could not parse error response');
-                }
-                throw new Error(errorMessage);
-              }
-
-              console.log('HomeScreen: Active game deleted successfully from backend');
-              
-              // Immediately update the UI by removing the game from the list
               setActiveGames(prevGames => {
                 const updatedGames = prevGames.filter(game => game.id !== gameId);
                 console.log('HomeScreen: Updated active games list, removed game', gameId);
                 return updatedGames;
               });
-              
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              
+
+              if (Platform.OS !== 'web') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+
               Alert.alert('Success', 'Active game deleted successfully');
             } catch (error) {
               console.error('HomeScreen: Error deleting active game', error);
@@ -1055,50 +935,30 @@ function HomeScreen() {
 
   const copyShareCode = async (templateId: string, templateName: string) => {
     console.log('HomeScreen: Copying share code for template', templateId, templateName);
-    
-    try {
-      if (!BACKEND_URL) {
-        console.error('HomeScreen: BACKEND_URL is not configured');
-        Alert.alert('Error', 'Backend URL is not configured');
-        return;
-      }
 
-      // Find the template to get its code
+    try {
       const template = templates.find(t => t.id === templateId);
-      
+
       if (!template) {
         console.error('HomeScreen: Template not found');
         Alert.alert('Error', 'Template not found');
         return;
       }
 
-      // Get or generate share code
-      let shareCode = (template as any).code;
-      
+      let shareCode = template.code;
+
       if (!shareCode) {
         console.log('HomeScreen: Generating share code for template');
-        const response = await fetch(`${BACKEND_URL}/templates/${templateId}/share`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        shareCode = data.code;
+        shareCode = await bingoService.generateShareCode(templateId);
         console.log('HomeScreen: Share code generated:', shareCode);
       }
 
-      // Copy to clipboard
       await Clipboard.setStringAsync(shareCode);
       console.log('HomeScreen: Share code copied to clipboard:', shareCode);
-      
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
 
       Alert.alert(
         'Code Copied!',
@@ -1123,7 +983,9 @@ function HomeScreen() {
     try {
       setIsSharing(true);
       
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
 
       console.log('HomeScreen: Capturing screenshot of bingo card with branded background');
       
@@ -1163,7 +1025,9 @@ function HomeScreen() {
 
       if (result.action === Share.sharedAction) {
         console.log('HomeScreen: User shared the bingo card successfully');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
       } else if (result.action === Share.dismissedAction) {
         console.log('HomeScreen: User dismissed the share dialog');
       }
@@ -1180,14 +1044,18 @@ function HomeScreen() {
   const handleInfoPress = () => {
     console.log('HomeScreen: Info button pressed');
     setShowInfoModal(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const handleSendFeedback = async () => {
     console.log('HomeScreen: Send feedback option selected - opening feedback URL');
     setShowInfoModal(false);
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
 
     const feedbackUrl = 'https://bingometis.com/feedback/';
 
@@ -1210,7 +1078,9 @@ function HomeScreen() {
     console.log('HomeScreen: Rate app option selected');
     setShowInfoModal(false);
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
 
     const appStoreUrl = Platform.select({
       ios: 'https://apps.apple.com/app/id6739162085',
@@ -1237,7 +1107,9 @@ function HomeScreen() {
     console.log('HomeScreen: More information option selected');
     setShowInfoModal(false);
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
 
     const websiteUrl = 'https://bingometis.com/';
 
@@ -1288,7 +1160,9 @@ function HomeScreen() {
   const handleGoPremium = async () => {
     console.log('HomeScreen: Go Premium button tapped - showing Superwall paywall');
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     
     // Show the Superwall paywall directly
     await showPaywall();
@@ -1297,13 +1171,17 @@ function HomeScreen() {
   const toggleCustomThemesExpanded = () => {
     console.log('HomeScreen: Toggling custom themes expanded');
     setCustomThemesExpanded(!customThemesExpanded);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const toggleActiveGamesExpanded = () => {
     console.log('HomeScreen: Toggling active games expanded');
     setActiveGamesExpanded(!activeGamesExpanded);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   if (loading) {
@@ -2020,12 +1898,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? 48 : 0,
   },
   topBanner: {
     backgroundColor: '#4A4A4A',
     paddingVertical: 8,
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'ios' ? 60 : 8,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -2033,14 +1912,14 @@ const styles = StyleSheet.create({
   infoButton: {
     position: 'absolute',
     left: 20,
-    top: 60,
+    top: Platform.OS === 'ios' ? 60 : 8,
     padding: 8,
     zIndex: 10,
   },
   premiumButton: {
     position: 'absolute',
     right: 20,
-    top: 60,
+    top: Platform.OS === 'ios' ? 60 : 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
