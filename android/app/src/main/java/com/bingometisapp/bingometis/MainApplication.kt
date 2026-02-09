@@ -1,4 +1,4 @@
-package com.bingometis.app
+package com.bingometisapp.bingometis
 
 import android.app.Application
 import android.content.res.Configuration

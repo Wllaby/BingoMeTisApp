@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.bingometis.app'
+    namespace 'com.bingometisapp.bingometis'
     defaultConfig {
-        applicationId 'com.bingometis.app'
+        applicationId 'com.bingometisapp.bingometis'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2

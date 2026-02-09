@@ -1,4 +1,4 @@
-package com.bingometis.app
+package com.bingometisapp.bingometis
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
