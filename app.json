@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Bingo MeTis",
-    "slug": "Bingo MeTis",
+    "slug": "bingo-metis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bingometis.app",
+      "bundleIdentifier": "com.bingometisapp.bingometis",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UISupportedInterfaceOrientations": [
@@ -38,7 +38,7 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.bingometis.app",
+      "package": "com.bingometisapp.bingometis",
       "screenOrientation": "portrait",
       "versionCode": 2,
       "intentFilters": [
@@ -73,7 +73,7 @@
         }
       ]
     ],
-    "scheme": "Bingo MeTis",
+    "scheme": "bingometis",
     "experiments": {
       "typedRoutes": true
     },
