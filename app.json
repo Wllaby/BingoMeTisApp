@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.suviaaltonen.bingometis",
+      "bundleIdentifier": "com.bingometisapp.bingometis",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UISupportedInterfaceOrientations": [
@@ -38,7 +38,7 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.saaltone.bingometis",
+      "package": "com.bingometisapp.bingometis",
       "screenOrientation": "portrait",
       "versionCode": 2,
       "intentFilters": [
