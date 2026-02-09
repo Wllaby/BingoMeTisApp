@@ -1,4 +1,4 @@
-package com.anonymous.Natively
+package com.bingometis.app
 
 import android.app.Application
 import android.content.res.Configuration

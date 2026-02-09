@@ -1,4 +1,4 @@
-package com.anonymous.Natively
+package com.bingometis.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
