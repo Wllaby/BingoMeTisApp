@@ -6,19 +6,37 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "ios": {
+        "simulator": false
+      },
       "android": {
         "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-email@example.com",
+        "ascAppId": "your-app-store-connect-id",
+        "appleTeamId": "your-team-id"
       }
     }
   }
