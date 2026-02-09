@@ -1084,7 +1084,7 @@ function HomeScreen() {
 
     const appStoreUrl = Platform.select({
       ios: 'https://apps.apple.com/app/id6739162085',
-      android: 'https://play.google.com/store/apps/details?id=com.bingometis.app',
+      android: 'https://play.google.com/store/apps/details?id=com.bingometisapp.bingometis',
       default: 'https://bingometis.com/'
     });
 
