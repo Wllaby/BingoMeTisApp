@@ -16,7 +16,8 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "apk"
@@ -24,10 +25,16 @@
     },
     "production": {
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ktrudxuppblrbewryyke.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cnVkeHVwcGJscmJld3J5eWtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0Njg0ODMsImV4cCI6MjA4NjA0NDQ4M30.x8exeR9DHeXW6F5WDt7gvFsOtBcD_gc3MRPW2GJ31L0"
       }
     }
   },
