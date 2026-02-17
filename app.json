@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bingometisapp.bingometis",
+      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UISupportedInterfaceOrientations": [
@@ -28,9 +29,15 @@
           {
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
           }
-        ]
+        ],
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save and share bingo cards.",
+        "NSCameraUsageDescription": "This app needs access to your camera to capture photos for bingo cards.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to enhance the bingo game experience with location-based features."
       },
-      "buildNumber": "2"
+      "appStoreUrl": "https://apps.apple.com/app/bingo-metis/id[YOUR_APP_ID]",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
