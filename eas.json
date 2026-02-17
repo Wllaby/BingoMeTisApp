@@ -41,9 +41,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "YOUR_APPLE_ID_EMAIL",
-        "ascAppId": "YOUR_ASC_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID",
+        "appleId": "saaltone@gmail.com",
+        "ascAppId": "6758481868",
+        "appleTeamId": "QYGBSKP2GJ",
         "language": "en-US",
         "companyName": "Bingo MeTis"
       }

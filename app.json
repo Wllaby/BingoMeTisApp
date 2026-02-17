@@ -34,7 +34,7 @@
         "NSCameraUsageDescription": "This app needs access to your camera to capture photos for bingo cards.",
         "NSLocationWhenInUseUsageDescription": "This app uses your location to enhance the bingo game experience with location-based features."
       },
-      "appStoreUrl": "https://apps.apple.com/app/bingo-metis/id[YOUR_APP_ID]",
+      "appStoreUrl": "https://apps.apple.com/app/bingo-metis/id6758481868",
       "config": {
         "usesNonExemptEncryption": false
       }
