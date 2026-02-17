@@ -6,9 +6,10 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert } from "react-native";
+import { useColorScheme, Alert, Platform } from "react-native";
 import { useNetworkState } from "expo-network";
 import * as Linking from "expo-linking";
+import Constants from "expo-constants";
 import {
   DarkTheme,
   DefaultTheme,
@@ -22,6 +23,24 @@ import { PremiumProvider } from "@/contexts/PremiumContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Initialize Google Mobile Ads
+const isExpoGo = Constants.appOwnership === 'expo';
+if (!isExpoGo && Platform.OS !== 'web') {
+  try {
+    const mobileAds = require('react-native-google-mobile-ads').default;
+    mobileAds()
+      .initialize()
+      .then(() => {
+        console.log('Google Mobile Ads initialized successfully');
+      })
+      .catch((error: any) => {
+        console.error('Failed to initialize Google Mobile Ads:', error);
+      });
+  } catch (error) {
+    console.error('Error loading Google Mobile Ads module:', error);
+  }
+}
 
 export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
