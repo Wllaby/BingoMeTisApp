@@ -24,6 +24,7 @@
       }
     },
     "production": {
+      "node": "22.12.0",
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium"
