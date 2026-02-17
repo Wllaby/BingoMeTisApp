@@ -24,24 +24,6 @@ import { PremiumProvider } from "@/contexts/PremiumContext";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Initialize Google Mobile Ads
-const isExpoGo = Constants.appOwnership === 'expo';
-if (!isExpoGo && Platform.OS !== 'web') {
-  try {
-    const mobileAds = require('react-native-google-mobile-ads').default;
-    mobileAds()
-      .initialize()
-      .then(() => {
-        console.log('Google Mobile Ads initialized successfully');
-      })
-      .catch((error: any) => {
-        console.error('Failed to initialize Google Mobile Ads:', error);
-      });
-  } catch (error) {
-    console.error('Error loading Google Mobile Ads module:', error);
-  }
-}
-
 export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
 };
@@ -52,6 +34,26 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  // Initialize Google Mobile Ads after component mounts
+  useEffect(() => {
+    const isExpoGo = Constants.appOwnership === 'expo';
+    if (!isExpoGo && Platform.OS !== 'web') {
+      try {
+        const mobileAds = require('react-native-google-mobile-ads').default;
+        mobileAds()
+          .initialize()
+          .then(() => {
+            console.log('Google Mobile Ads initialized successfully');
+          })
+          .catch((error: any) => {
+            console.error('Failed to initialize Google Mobile Ads:', error);
+          });
+      } catch (error) {
+        console.error('Error loading Google Mobile Ads module:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (loaded) {
