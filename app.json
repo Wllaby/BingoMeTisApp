@@ -47,7 +47,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.bingometisapp.bingometis",
       "screenOrientation": "portrait",
-      "versionCode": 2,
+      "versionCode": 3,
       "intentFilters": [
         {
           "action": "VIEW",
