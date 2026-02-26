@@ -19,7 +19,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { PremiumProvider } from "@/contexts/PremiumContext";
-// Note: Error logging is auto-initialized via index.ts import
+import { initializeGoogleMobileAds } from "@/utils/initializeAds";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -35,24 +35,36 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  // Initialize Google Mobile Ads after component mounts
+  // Initialize Google Mobile Ads after component mounts (native only)
   useEffect(() => {
-    const isExpoGo = Constants.appOwnership === 'expo';
-    if (!isExpoGo && Platform.OS !== 'web') {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const initializeAds = async () => {
       try {
-        const mobileAds = require('react-native-google-mobile-ads').default;
-        mobileAds()
-          .initialize()
-          .then(() => {
-            console.log('Google Mobile Ads initialized successfully');
-          })
-          .catch((error: any) => {
-            console.error('Failed to initialize Google Mobile Ads:', error);
-          });
+        timeoutId = setTimeout(() => {
+          console.warn('Google Mobile Ads initialization timeout - continuing without ads');
+        }, 10000);
+
+        await initializeGoogleMobileAds();
+
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       } catch (error) {
-        console.error('Error loading Google Mobile Ads module:', error);
+        console.error('Error initializing Google Mobile Ads:', error);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
-    }
+    };
+
+    initializeAds();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   useEffect(() => {

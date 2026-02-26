@@ -67,24 +67,20 @@ try {
   console.log('PremiumContext: Superwall module not available:', error);
 }
 
-// Real Superwall implementation
+// Real Superwall implementation with error boundary
 function PremiumProviderInner({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  // CRITICAL FIX: Always call hooks unconditionally at the top level
-  // Check if SuperwallModule exists and has the hooks we need
-  const hasSuperwallHooks = SuperwallModule && SuperwallModule.useUser && SuperwallModule.usePlacement;
-  
-  // Call hooks unconditionally - they will return null if SuperwallModule doesn't exist
   let user = null;
   let placement = null;
-  
+  let subscriptionStatus = null;
+  let registerPlacement = null;
+
   try {
-    if (hasSuperwallHooks) {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+    if (SuperwallModule?.useUser && SuperwallModule?.usePlacement) {
       user = SuperwallModule.useUser();
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       placement = SuperwallModule.usePlacement({
         onPresent: (info: any) => {
           console.log('Superwall: Paywall presented', info);
@@ -99,13 +95,15 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
           console.error('Superwall: Paywall error', error);
         }
       });
+
+      subscriptionStatus = user?.subscriptionStatus;
+      registerPlacement = placement?.registerPlacement;
     }
   } catch (error) {
-    console.error('PremiumContext: Error calling Superwall hooks:', error);
+    console.error('PremiumContext: Critical error with Superwall hooks:', error);
+    setHasError(true);
+    setIsLoading(false);
   }
-  
-  const subscriptionStatus = user?.subscriptionStatus;
-  const registerPlacement = placement?.registerPlacement;
 
   useEffect(() => {
     console.log('Superwall: Subscription status changed', subscriptionStatus);
@@ -150,11 +148,43 @@ function PremiumProviderInner({ children }: { children: ReactNode }) {
     isLoading
   }), [isPremium, showPaywall, isLoading]);
 
+  if (hasError) {
+    console.log('PremiumContext: Error detected, falling back to mock mode');
+    return <MockPremiumProvider>{children}</MockPremiumProvider>;
+  }
+
   return (
     <PremiumContext.Provider value={value}>
       {children}
     </PremiumContext.Provider>
   );
+}
+
+class SuperwallErrorBoundary extends React.Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    console.error('SuperwallErrorBoundary: Caught error', error);
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('SuperwallErrorBoundary: Error details', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
 }
 
 export function PremiumProvider({ children }: { children: ReactNode }) {
@@ -174,7 +204,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
   }
 
   // If Superwall components are not available, use mock
-  if (!SuperwallModule.SuperwallProvider || !SuperwallModule.SuperwallLoading || 
+  if (!SuperwallModule.SuperwallProvider || !SuperwallModule.SuperwallLoading ||
       !SuperwallModule.SuperwallError || !SuperwallModule.SuperwallLoaded) {
     console.log('PremiumProvider: Superwall components not available, using mock mode');
     return <MockPremiumProvider>{children}</MockPremiumProvider>;
@@ -188,33 +218,34 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
 
   try {
     return (
-      <SuperwallProvider 
-        apiKey={SUPERWALL_API_KEY}
-        onConfigurationError={(error: any) => {
-          console.error('Superwall: Configuration error', error);
-        }}
-      >
-        <SuperwallLoading>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Initializing payment system...</Text>
-          </View>
-        </SuperwallLoading>
-
-        <SuperwallError>
-          {(error: any) => {
-            console.error('Superwall: Error state', error);
-            // Fallback to mock provider on error
-            return <MockPremiumProvider>{children}</MockPremiumProvider>;
+      <SuperwallErrorBoundary fallback={<MockPremiumProvider>{children}</MockPremiumProvider>}>
+        <SuperwallProvider
+          apiKey={SUPERWALL_API_KEY}
+          onConfigurationError={(error: any) => {
+            console.error('Superwall: Configuration error', error);
           }}
-        </SuperwallError>
+        >
+          <SuperwallLoading>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Initializing payment system...</Text>
+            </View>
+          </SuperwallLoading>
 
-        <SuperwallLoaded>
-          <PremiumProviderInner>
-            {children}
-          </PremiumProviderInner>
-        </SuperwallLoaded>
-      </SuperwallProvider>
+          <SuperwallError>
+            {(error: any) => {
+              console.error('Superwall: Error state', error);
+              return <MockPremiumProvider>{children}</MockPremiumProvider>;
+            }}
+          </SuperwallError>
+
+          <SuperwallLoaded>
+            <PremiumProviderInner>
+              {children}
+            </PremiumProviderInner>
+          </SuperwallLoaded>
+        </SuperwallProvider>
+      </SuperwallErrorBoundary>
     );
   } catch (error) {
     console.error('PremiumProvider: Error initializing Superwall, falling back to mock mode:', error);
