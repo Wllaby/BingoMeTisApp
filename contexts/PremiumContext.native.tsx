@@ -55,16 +55,23 @@ export function MockPremiumProvider({ children }: { children: ReactNode }) {
 let SuperwallModule: any = null;
 let superwallLoadError: any = null;
 
+// CRITICAL: Wrap ALL Superwall-related code in try-catch to prevent module crashes
 try {
+  // Only attempt to load Superwall if NOT in Expo Go
   if (!isExpoGo) {
-    SuperwallModule = require('expo-superwall');
-    console.log('PremiumContext: Superwall module loaded successfully');
+    try {
+      SuperwallModule = require('expo-superwall');
+      console.log('PremiumContext: Superwall module loaded successfully');
+    } catch (requireError) {
+      superwallLoadError = requireError;
+      console.log('PremiumContext: Failed to require expo-superwall:', requireError);
+    }
   } else {
     console.log('PremiumContext: Running in Expo Go, Superwall not available');
   }
 } catch (error) {
   superwallLoadError = error;
-  console.log('PremiumContext: Superwall module not available:', error);
+  console.error('PremiumContext: Critical error during Superwall module loading:', error);
 }
 
 // Real Superwall implementation with error boundary
@@ -188,9 +195,10 @@ class SuperwallErrorBoundary extends React.Component<
 }
 
 export function PremiumProvider({ children }: { children: ReactNode }) {
-  // If we're in Expo Go, use mock implementation
+  // CRITICAL: Check for Expo Go FIRST before any Superwall code
+  // This prevents errors when running in Expo Go
   if (isExpoGo) {
-    console.log('PremiumProvider: Using mock mode (Expo Go)');
+    console.log('PremiumProvider: Running in Expo Go, using mock mode');
     return <MockPremiumProvider>{children}</MockPremiumProvider>;
   }
 
@@ -256,7 +264,18 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
 export function usePremium() {
   const context = useContext(PremiumContext);
   if (context === undefined) {
-    throw new Error('usePremium must be used within a PremiumProvider');
+    console.error('usePremium: Context is undefined! This should not happen.');
+    console.error('usePremium: Ensure PremiumProvider is wrapping your app in _layout.tsx');
+
+    // Return a fallback value instead of crashing
+    // This allows the app to continue running in Expo Go
+    return {
+      isPremium: false,
+      showPaywall: async () => {
+        console.log('usePremium: Fallback showPaywall called');
+      },
+      isLoading: false
+    };
   }
   return context;
 }

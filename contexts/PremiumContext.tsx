@@ -61,7 +61,17 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
 export function usePremium() {
   const context = useContext(PremiumContext);
   if (context === undefined) {
-    throw new Error('usePremium must be used within a PremiumProvider');
+    console.error('usePremium: Context is undefined! This should not happen.');
+    console.error('usePremium: Ensure PremiumProvider is wrapping your app in _layout.tsx');
+
+    // Return a fallback value instead of crashing
+    return {
+      isPremium: false,
+      showPaywall: async () => {
+        console.log('usePremium: Fallback showPaywall called');
+      },
+      isLoading: false
+    };
   }
   return context;
 }
